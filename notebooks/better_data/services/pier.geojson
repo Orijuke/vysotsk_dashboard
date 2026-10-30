@@ -1,0 +1,16 @@
+{
+"type": "FeatureCollection",
+"name": "pier",
+"crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" } },
+"features": [
+{ "type": "Feature", "properties": { "service_id": null, "capacity": null, "service_name": "пирс" }, "geometry": { "type": "Point", "coordinates": [ 28.567524500554981, 60.631723601438438 ] } },
+{ "type": "Feature", "properties": { "service_id": null, "capacity": null, "service_name": "пирс" }, "geometry": { "type": "Point", "coordinates": [ 28.568971873190051, 60.63357041659637 ] } },
+{ "type": "Feature", "properties": { "service_id": null, "capacity": null, "service_name": "пирс" }, "geometry": { "type": "Point", "coordinates": [ 28.566216102809886, 60.631013771250494 ] } },
+{ "type": "Feature", "properties": { "service_id": null, "capacity": null, "service_name": "пирс" }, "geometry": { "type": "Point", "coordinates": [ 28.576968013813318, 60.627623160666502 ] } },
+{ "type": "Feature", "properties": { "service_id": null, "capacity": null, "service_name": "пирс" }, "geometry": { "type": "Point", "coordinates": [ 28.561604758752967, 60.62654108491963 ] } },
+{ "type": "Feature", "properties": { "service_id": null, "capacity": null, "service_name": "пирс" }, "geometry": { "type": "Point", "coordinates": [ 28.553035900574116, 60.634802981915279 ] } },
+{ "type": "Feature", "properties": { "service_id": null, "capacity": null, "service_name": "пирс" }, "geometry": { "type": "Point", "coordinates": [ 28.543472649262203, 60.641402690118248 ] } },
+{ "type": "Feature", "properties": { "service_id": null, "capacity": null, "service_name": "пирс" }, "geometry": { "type": "Point", "coordinates": [ 28.545558384411596, 60.640876350503675 ] } },
+{ "type": "Feature", "properties": { "service_id": null, "capacity": null, "service_name": "пирс" }, "geometry": { "type": "Point", "coordinates": [ 28.538663450988039, 60.643737755170839 ] } }
+]
+}

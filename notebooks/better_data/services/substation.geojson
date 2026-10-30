@@ -1,0 +1,11 @@
+{
+"type": "FeatureCollection",
+"name": "substation",
+"crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" } },
+"features": [
+{ "type": "Feature", "properties": { "service_id": null, "service_name": "Трансформаторная подстанция", "NAME": "ПС «Высоцкая» (инв. №050002814)", "capacity": 0 }, "geometry": { "type": "Point", "coordinates": [ 28.569735888664212, 60.618577165863478 ] } },
+{ "type": "Feature", "properties": { "service_id": null, "service_name": "Трансформаторная подстанция", "NAME": "Трансформаторная подстанция № 1", "capacity": 0 }, "geometry": { "type": "Point", "coordinates": [ 28.567373366174607, 60.622488965750783 ] } },
+{ "type": "Feature", "properties": { "service_id": null, "service_name": "Трансформаторная подстанция", "NAME": "Трансформаторная подстанция №5", "capacity": 0 }, "geometry": { "type": "Point", "coordinates": [ 28.570938140906851, 60.628626219407927 ] } },
+{ "type": "Feature", "properties": { "service_id": null, "service_name": "Трансформаторная подстанция", "NAME": null, "capacity": 0 }, "geometry": { "type": "Point", "coordinates": [ 28.579123404401471, 60.59786844940519 ] } }
+]
+}

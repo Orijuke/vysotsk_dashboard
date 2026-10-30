@@ -1,0 +1,8 @@
+{
+"type": "FeatureCollection",
+"name": "cemetery",
+"crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" } },
+"features": [
+{ "type": "Feature", "properties": { "service_id": null, "service_name": "Кладбище", "capacity": 0 }, "geometry": { "type": "MultiPolygon", "coordinates": [ [ [ [ 28.570956395915971, 60.622333068309594 ], [ 28.571402346713008, 60.621049224269022 ], [ 28.57322036731998, 60.621222581909699 ], [ 28.572604925576961, 60.622554506313456 ], [ 28.571610487474363, 60.622431829743618 ], [ 28.570956395915971, 60.622333068309594 ] ] ] ] } }
+]
+}

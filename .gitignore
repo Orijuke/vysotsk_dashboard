@@ -42,3 +42,22 @@ ENV/
 
 # PyCharm env
 .idea
+# ---- Vysotsk dashboard: локальные секреты и системный мусор ----
+.env.*
+*.pem
+*.key
+Thumbs.db
+desktop.ini
+.DS_Store
+.vscode/
+*.tmp
+*.bak
+~$*
+
+# ---- Кэш и крупные результаты расчётов (хранятся локально, не в Git) ----
+notebooks/cache/
+notebooks/data/
+*.pickle
+*.zip
+*.7z
+*.rar

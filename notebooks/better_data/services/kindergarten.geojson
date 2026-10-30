@@ -1,0 +1,8 @@
+{
+"type": "FeatureCollection",
+"name": "kindergarten",
+"crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" } },
+"features": [
+{ "type": "Feature", "properties": { "NAME": "МБДОУ \"Детский сад \"Боровичок\" общеразвивающего вида с приоритетным осуществлением деятельности по познавательно-речевому развитию детей города Высоцка\"", "ADRESS": "г.Высоцк, ​Ленинская улица, 2", "FUNCTION": "Дошкольное образовательное учреждение", "service_id": 21, "service_name": "Детский сад", "capacity": 60 }, "geometry": { "type": "Point", "coordinates": [ 28.571033063208198, 60.628949706500642 ] } }
+]
+}
