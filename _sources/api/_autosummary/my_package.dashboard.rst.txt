@@ -1,0 +1,30 @@
+my\_package.dashboard
+=====================
+
+.. automodule:: my_package.dashboard
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+   
+      build_dashboard
+      close_nan
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+

@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>my_package.service_catalog &mdash; MyPackage 0.0.1 documentation</title>
+      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/graphviz.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/doctools.js"></script>
+        <script src="../../_static/sphinx_highlight.js"></script>
+        <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="my_package.statistics" href="my_package.statistics.html" />
+    <link rel="prev" title="my_package.provision" href="my_package.provision.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            MyPackage
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../guide/index.html">Гайд по использованию шаблона</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../examples/index.html">Examples</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../index.html">API documentation</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="my_package.html">my_package</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="my_package.accessibility.html">my_package.accessibility</a></li>
+<li class="toctree-l3"><a class="reference internal" href="my_package.dashboard.html">my_package.dashboard</a></li>
+<li class="toctree-l3"><a class="reference internal" href="my_package.dashboard_template.html">my_package.dashboard_template</a></li>
+<li class="toctree-l3"><a class="reference internal" href="my_package.my_module.html">my_package.my_module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="my_package.provision.html">my_package.provision</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">my_package.service_catalog</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#my_package.service_catalog.resolve_service_type"><code class="docutils literal notranslate"><span class="pre">resolve_service_type()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#my_package.service_catalog.is_context_only"><code class="docutils literal notranslate"><span class="pre">is_context_only()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#my_package.service_catalog.service_spec"><code class="docutils literal notranslate"><span class="pre">service_spec()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#my_package.service_catalog.service_group"><code class="docutils literal notranslate"><span class="pre">service_group()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#my_package.service_catalog.list_service_files"><code class="docutils literal notranslate"><span class="pre">list_service_files()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#my_package.service_catalog.load_service_layer"><code class="docutils literal notranslate"><span class="pre">load_service_layer()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#my_package.service_catalog._capacity_from_site_area"><code class="docutils literal notranslate"><span class="pre">_capacity_from_site_area()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="my_package.statistics.html">my_package.statistics</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">MyPackage</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">API documentation</a></li>
+          <li class="breadcrumb-item"><a href="my_package.html">my_package</a></li>
+      <li class="breadcrumb-item active">my_package.service_catalog</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/api/_autosummary/my_package.service_catalog.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-my_package.service_catalog">
+<span id="my-package-service-catalog"></span><h1>my_package.service_catalog<a class="headerlink" href="#module-my_package.service_catalog" title="Permalink to this heading"></a></h1>
+<p>Service catalogue shared by the research pipeline and the dashboard.</p>
+<p class="rubric">Functions</p>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#my_package.service_catalog.is_context_only" title="my_package.service_catalog.is_context_only"><code class="xref py py-obj docutils literal notranslate"><span class="pre">is_context_only</span></code></a>(service_id)</p></td>
+<td><p>Return True when a layer is displayed but has no provision indicator.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#my_package.service_catalog.list_service_files" title="my_package.service_catalog.list_service_files"><code class="xref py py-obj docutils literal notranslate"><span class="pre">list_service_files</span></code></a>(services_dir, *[, ...])</p></td>
+<td><p>Return service data files mapped to their BlocksNet types.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#my_package.service_catalog.load_service_layer" title="my_package.service_catalog.load_service_layer"><code class="xref py py-obj docutils literal notranslate"><span class="pre">load_service_layer</span></code></a>(path, service_id, *[, crs])</p></td>
+<td><p>Load a service layer and fill missing capacity by site area or service type.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#my_package.service_catalog.resolve_service_type" title="my_package.service_catalog.resolve_service_type"><code class="xref py py-obj docutils literal notranslate"><span class="pre">resolve_service_type</span></code></a>(service_id)</p></td>
+<td><p>Return the BlocksNet service type for a source layer identifier.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#my_package.service_catalog.service_group" title="my_package.service_catalog.service_group"><code class="xref py py-obj docutils literal notranslate"><span class="pre">service_group</span></code></a>(service_id)</p></td>
+<td><p>Return the functional group for a service identifier.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#my_package.service_catalog.service_spec" title="my_package.service_catalog.service_spec"><code class="xref py py-obj docutils literal notranslate"><span class="pre">service_spec</span></code></a>(service_id)</p></td>
+<td><p>Return the catalogue entry for a service identifier.</p></td>
+</tr>
+</tbody>
+</table>
+<dl class="py function">
+<dt class="sig sig-object py" id="my_package.service_catalog.resolve_service_type">
+<span class="sig-prename descclassname"><span class="pre">my_package.service_catalog.</span></span><span class="sig-name descname"><span class="pre">resolve_service_type</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">service_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="../../_modules/my_package/service_catalog.html#resolve_service_type"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#my_package.service_catalog.resolve_service_type" title="Permalink to this definition"></a></dt>
+<dd><p>Return the BlocksNet service type for a source layer identifier.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="my_package.service_catalog.is_context_only">
+<span class="sig-prename descclassname"><span class="pre">my_package.service_catalog.</span></span><span class="sig-name descname"><span class="pre">is_context_only</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">service_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="reference internal" href="../../_modules/my_package/service_catalog.html#is_context_only"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#my_package.service_catalog.is_context_only" title="Permalink to this definition"></a></dt>
+<dd><p>Return True when a layer is displayed but has no provision indicator.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="my_package.service_catalog.service_spec">
+<span class="sig-prename descclassname"><span class="pre">my_package.service_catalog.</span></span><span class="sig-name descname"><span class="pre">service_spec</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">service_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></span><a class="reference internal" href="../../_modules/my_package/service_catalog.html#service_spec"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#my_package.service_catalog.service_spec" title="Permalink to this definition"></a></dt>
+<dd><p>Return the catalogue entry for a service identifier.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="my_package.service_catalog.service_group">
+<span class="sig-prename descclassname"><span class="pre">my_package.service_catalog.</span></span><span class="sig-name descname"><span class="pre">service_group</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">service_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></span><a class="reference internal" href="../../_modules/my_package/service_catalog.html#service_group"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#my_package.service_catalog.service_group" title="Permalink to this definition"></a></dt>
+<dd><p>Return the functional group for a service identifier.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="my_package.service_catalog.list_service_files">
+<span class="sig-prename descclassname"><span class="pre">my_package.service_catalog.</span></span><span class="sig-name descname"><span class="pre">list_service_files</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">services_dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Path</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">include_context</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">pathlib.Path</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../_modules/my_package/service_catalog.html#list_service_files"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#my_package.service_catalog.list_service_files" title="Permalink to this definition"></a></dt>
+<dd><p>Return service data files mapped to their BlocksNet types.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="my_package.service_catalog.load_service_layer">
+<span class="sig-prename descclassname"><span class="pre">my_package.service_catalog.</span></span><span class="sig-name descname"><span class="pre">load_service_layer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">service_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">crs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">GeoDataFrame</span></span></span><a class="reference internal" href="../../_modules/my_package/service_catalog.html#load_service_layer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#my_package.service_catalog.load_service_layer" title="Permalink to this definition"></a></dt>
+<dd><p>Load a service layer and fill missing capacity by site area or service type.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="my_package.service_catalog._capacity_from_site_area">
+<span class="sig-prename descclassname"><span class="pre">my_package.service_catalog.</span></span><span class="sig-name descname"><span class="pre">_capacity_from_site_area</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">layer</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">GeoDataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">service_type</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Series</span></span></span><a class="reference internal" href="../../_modules/my_package/service_catalog.html#_capacity_from_site_area"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#my_package.service_catalog._capacity_from_site_area" title="Permalink to this definition"></a></dt>
+<dd><p>Estimate capacity for polygonal objects using the closest standard site area.</p>
+</dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="my_package.provision.html" class="btn btn-neutral float-left" title="my_package.provision" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="my_package.statistics.html" class="btn btn-neutral float-right" title="my_package.statistics" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024-2026.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

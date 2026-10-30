@@ -1,0 +1,29 @@
+my\_package.provision
+=====================
+
+.. automodule:: my_package.provision
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+   
+      probabilistic_provision
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+

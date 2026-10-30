@@ -1,0 +1,32 @@
+my\_package.accessibility
+=========================
+
+.. automodule:: my_package.accessibility
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+   
+      boundary_snap_points
+      calculate_boundary_accessibility_matrix
+      combine_accessibility_matrices
+      combine_distance_series
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+

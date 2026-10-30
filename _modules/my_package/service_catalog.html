@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>my_package.service_catalog &mdash; MyPackage 0.0.1 documentation</title>
+      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/graphviz.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/doctools.js"></script>
+        <script src="../../_static/sphinx_highlight.js"></script>
+        <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            MyPackage
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../guide/index.html">Гайд по использованию шаблона</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../examples/index.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api/index.html">API documentation</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">MyPackage</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">my_package.service_catalog</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for my_package.service_catalog</h1><div class="highlight"><pre>
+<span></span><span class="sd">"""Service catalogue shared by the research pipeline and the dashboard."""</span>
+
+<span class="c1"># pylint: disable=import-outside-toplevel</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">math</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">geopandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">gpd</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+
+
+<span class="n">SERVICE_GROUPS</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="p">{</span><span class="s2">"id"</span><span class="p">:</span> <span class="s2">"retail"</span><span class="p">,</span> <span class="s2">"label"</span><span class="p">:</span> <span class="s2">"Торговля и общественное питание"</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">"id"</span><span class="p">:</span> <span class="s2">"education"</span><span class="p">,</span> <span class="s2">"label"</span><span class="p">:</span> <span class="s2">"Образование"</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">"id"</span><span class="p">:</span> <span class="s2">"healthcare"</span><span class="p">,</span> <span class="s2">"label"</span><span class="p">:</span> <span class="s2">"Здравоохранение"</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">"id"</span><span class="p">:</span> <span class="s2">"culture"</span><span class="p">,</span> <span class="s2">"label"</span><span class="p">:</span> <span class="s2">"Культура и досуг"</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">"id"</span><span class="p">:</span> <span class="s2">"nature"</span><span class="p">,</span> <span class="s2">"label"</span><span class="p">:</span> <span class="s2">"Природа и рекреация"</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">"id"</span><span class="p">:</span> <span class="s2">"transport"</span><span class="p">,</span> <span class="s2">"label"</span><span class="p">:</span> <span class="s2">"Транспорт и мобильность"</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">"id"</span><span class="p">:</span> <span class="s2">"finance"</span><span class="p">,</span> <span class="s2">"label"</span><span class="p">:</span> <span class="s2">"Финансы и административные услуги"</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">"id"</span><span class="p">:</span> <span class="s2">"safety"</span><span class="p">,</span> <span class="s2">"label"</span><span class="p">:</span> <span class="s2">"Безопасность"</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">"id"</span><span class="p">:</span> <span class="s2">"engineering"</span><span class="p">,</span> <span class="s2">"label"</span><span class="p">:</span> <span class="s2">"Инженерная инфраструктура"</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">"id"</span><span class="p">:</span> <span class="s2">"other"</span><span class="p">,</span> <span class="s2">"label"</span><span class="p">:</span> <span class="s2">"Прочие и специальные объекты"</span><span class="p">},</span>
+<span class="p">]</span>
+
+<span class="n">SERVICE_GROUP_BY_ID</span> <span class="o">=</span> <span class="p">{</span><span class="n">group</span><span class="p">[</span><span class="s2">"id"</span><span class="p">]:</span> <span class="n">group</span> <span class="k">for</span> <span class="n">group</span> <span class="ow">in</span> <span class="n">SERVICE_GROUPS</span><span class="p">}</span>
+<span class="n">SERVICE_GROUP_ORDER</span> <span class="o">=</span> <span class="p">{</span><span class="n">group</span><span class="p">[</span><span class="s2">"id"</span><span class="p">]:</span> <span class="n">index</span> <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="n">group</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">SERVICE_GROUPS</span><span class="p">)}</span>
+
+<span class="n">SERVICE_SPECS</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="p">{</span>
+        <span class="s2">"id"</span><span class="p">:</span> <span class="s2">"supermarket"</span><span class="p">,</span>
+        <span class="s2">"label"</span><span class="p">:</span> <span class="s2">"Супермаркеты"</span><span class="p">,</span>
+        <span class="s2">"group"</span><span class="p">:</span> <span class="s2">"retail"</span><span class="p">,</span>
+        <span class="s2">"color"</span><span class="p">:</span> <span class="s2">"#0A84FF"</span><span class="p">,</span>
+        <span class="s2">"render"</span><span class="p">:</span> <span class="s2">"auto"</span><span class="p">,</span>
+        <span class="s2">"provision"</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="s2">"context_only"</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="p">},</span>
+    <span class="p">{</span>
+        <span class="s2">"id"</span><span class="p">:</span> <span class="s2">"convenience"</span><span class="p">,</span>
+        <span class="s2">"label"</span><span class="p">:</span> <span class="s2">"Магазины у дома"</span><span class="p">,</span>
+        <span class="s2">"group"</span><span class="p">:</span> <span class="s2">"retail"</span><span class="p">,</span>
+        <span class="s2">"color"</span><span class="p">:</span> <span class="s2">"#64D2FF"</span><span class="p">,</span>
+        <span class="s2">"render"</span><span class="p">:</span> <span class="s2">"auto"</span><span class="p">,</span>
+        <span class="s2">"provision"</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="s2">"context_only"</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="p">},</span>
+    <span class="p">{</span>
+        <span class="s2">"id"</span><span class="p">:</span> <span class="s2">"cafe"</span><span class="p">,</span>
+        <span class="s2">"label"</span><span class="p">:</span> <span class="s2">"Кафе"</span><span class="p">,</span>
+        <span class="s2">"group"</span><span class="p">:</span> <span class="s2">"retail"</span><span class="p">,</span>
+        <span class="s2">"color"</span><span class="p">:</span> <span class="s2">"#FF9F0A"</span><span class="p">,</span>
+        <span class="s2">"render"</span><span class="p">:</span> <span class="s2">"auto"</span><span class="p">,</span>
+        <span class="s2">"provision"</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="s2">"context_only"</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="p">},</span>
+    <span class="p">{</span>
+        <span class="s2">"id"</span><span class="p">:</span> <span class="s2">"school"</span><span class="p">,</span>
+        <span class="s2">"label"</span><span class="p">:</span> <span class="s2">"Школы"</span><span class="p">,</span>
+        <span class="s2">"group"</span><span class="p">:</span> <span class="s2">"education"</span><span class="p">,</span>
+        <span class="s2">"color"</span><span class="p">:</span> <span class="s2">"#FF9F0A"</span><span class="p">,</span>
+        <span class="s2">"render"</span><span class="p">:</span> <span class="s2">"auto"</span><span class="p">,</span>
+        <span class="s2">"provision"</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="s2">"context_only"</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="p">},</span>
+    <span class="p">{</span>
+        <span class="s2">"id"</span><span class="p">:</span> <span class="s2">"kindergarten"</span><span class="p">,</span>
+        <span class="s2">"label"</span><span class="p">:</span> <span class="s2">"Детские сады"</span><span class="p">,</span>
+        <span class="s2">"group"</span><span class="p">:</span> <span class="s2">"education"</span><span class="p">,</span>
+        <span class="s2">"color"</span><span class="p">:</span> <span class="s2">"#FFD60A"</span><span class="p">,</span>
+        <span class="s2">"render"</span><span class="p">:</span> <span class="s2">"auto"</span><span class="p">,</span>
+        <span class="s2">"provision"</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="s2">"context_only"</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="p">},</span>
+    <span class="p">{</span>
+        <span class="s2">"id"</span><span class="p">:</span> <span class="s2">"polyclinic"</span><span class="p">,</span>
+        <span class="s2">"label"</span><span class="p">:</span> <span class="s2">"Поликлиники"</span><span class="p">,</span>
+        <span class="s2">"group"</span><span class="p">:</span> <span class="s2">"healthcare"</span><span class="p">,</span>
+        <span class="s2">"color"</span><span class="p">:</span> <span class="s2">"#FF453A"</span><span class="p">,</span>
+        <span class="s2">"render"</span><span class="p">:</span> <span class="s2">"auto"</span><span class="p">,</span>
+        <span class="s2">"provision"</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="s2">"context_only"</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="p">},</span>
+    <span class="p">{</span>
+        <span class="s2">"id"</span><span class="p">:</span> <span class="s2">"hospital"</span><span class="p">,</span>
+        <span class="s2">"label"</span><span class="p">:</span> <span class="s2">"Больницы"</span><span class="p">,</span>
+        <span class="s2">"group"</span><span class="p">:</span> <span class="s2">"healthcare"</span><span class="p">,</span>
+        <span class="s2">"color"</span><span class="p">:</span> <span class="s2">"#FF375F"</span><span class="p">,</span>
+        <span class="s2">"render"</span><span class="p">:</span> <span class="s2">"auto"</span><span class="p">,</span>
+        <span class="s2">"provision"</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="s2">"context_only"</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="p">},</span>
+    <span class="p">{</span>
+        <span class="s2">"id"</span><span class="p">:</span> <span class="s2">"pharmacy"</span><span class="p">,</span>
+        <span class="s2">"label"</span><span class="p">:</span> <span class="s2">"Аптеки"</span><span class="p">,</span>
+        <span class="s2">"group"</span><span class="p">:</span> <span class="s2">"healthcare"</span><span class="p">,</span>
+        <span class="s2">"color"</span><span class="p">:</span> <span class="s2">"#30D158"</span><span class="p">,</span>
+        <span class="s2">"render"</span><span class="p">:</span> <span class="s2">"auto"</span><span class="p">,</span>
+        <span class="s2">"provision"</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="s2">"context_only"</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="p">},</span>
+    <span class="p">{</span>
+        <span class="s2">"id"</span><span class="p">:</span> <span class="s2">"library"</span><span class="p">,</span>
+        <span class="s2">"label"</span><span class="p">:</span> <span class="s2">"Библиотеки"</span><span class="p">,</span>
+        <span class="s2">"group"</span><span class="p">:</span> <span class="s2">"culture"</span><span class="p">,</span>
+        <span class="s2">"color"</span><span class="p">:</span> <span class="s2">"#BF5AF2"</span><span class="p">,</span>
+        <span class="s2">"render"</span><span class="p">:</span> <span class="s2">"auto"</span><span class="p">,</span>
+        <span class="s2">"provision"</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="s2">"context_only"</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="p">},</span>
+    <span class="p">{</span>
+        <span class="s2">"id"</span><span class="p">:</span> <span class="s2">"stadium"</span><span class="p">,</span>
+        <span class="s2">"label"</span><span class="p">:</span> <span class="s2">"Стадионы"</span><span class="p">,</span>
+        <span class="s2">"group"</span><span class="p">:</span> <span class="s2">"culture"</span><span class="p">,</span>
+        <span class="s2">"color"</span><span class="p">:</span> <span class="s2">"#FF9F0A"</span><span class="p">,</span>
+        <span class="s2">"render"</span><span class="p">:</span> <span class="s2">"auto"</span><span class="p">,</span>
+        <span class="s2">"provision"</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="s2">"context_only"</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="p">},</span>
+    <span class="p">{</span>
+        <span class="s2">"id"</span><span class="p">:</span> <span class="s2">"religion"</span><span class="p">,</span>
+        <span class="s2">"label"</span><span class="p">:</span> <span class="s2">"Религиозные объекты"</span><span class="p">,</span>
+        <span class="s2">"group"</span><span class="p">:</span> <span class="s2">"culture"</span><span class="p">,</span>
+        <span class="s2">"color"</span><span class="p">:</span> <span class="s2">"#BF5AF2"</span><span class="p">,</span>
+        <span class="s2">"render"</span><span class="p">:</span> <span class="s2">"auto"</span><span class="p">,</span>
+        <span class="s2">"provision"</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="s2">"context_only"</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="p">},</span>
+    <span class="p">{</span>
+        <span class="s2">"id"</span><span class="p">:</span> <span class="s2">"camp"</span><span class="p">,</span>
+        <span class="s2">"label"</span><span class="p">:</span> <span class="s2">"Детские лагеря"</span><span class="p">,</span>
+        <span class="s2">"group"</span><span class="p">:</span> <span class="s2">"culture"</span><span class="p">,</span>
+        <span class="s2">"color"</span><span class="p">:</span> <span class="s2">"#FFD60A"</span><span class="p">,</span>
+        <span class="s2">"render"</span><span class="p">:</span> <span class="s2">"auto"</span><span class="p">,</span>
+        <span class="s2">"provision"</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="s2">"context_only"</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="p">},</span>
+    <span class="p">{</span>
+        <span class="s2">"id"</span><span class="p">:</span> <span class="s2">"zoo"</span><span class="p">,</span>
+        <span class="s2">"label"</span><span class="p">:</span> <span class="s2">"Зоопарки"</span><span class="p">,</span>
+        <span class="s2">"group"</span><span class="p">:</span> <span class="s2">"culture"</span><span class="p">,</span>
+        <span class="s2">"color"</span><span class="p">:</span> <span class="s2">"#34C759"</span><span class="p">,</span>
+        <span class="s2">"render"</span><span class="p">:</span> <span class="s2">"auto"</span><span class="p">,</span>
+        <span class="s2">"provision"</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="s2">"context_only"</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="p">},</span>
+    <span class="p">{</span>
+        <span class="s2">"id"</span><span class="p">:</span> <span class="s2">"historic"</span><span class="p">,</span>
+        <span class="s2">"label"</span><span class="p">:</span> <span class="s2">"Исторические места"</span><span class="p">,</span>
+        <span class="s2">"group"</span><span class="p">:</span> <span class="s2">"culture"</span><span class="p">,</span>
+        <span class="s2">"color"</span><span class="p">:</span> <span class="s2">"#BF5AF2"</span><span class="p">,</span>
+        <span class="s2">"render"</span><span class="p">:</span> <span class="s2">"auto"</span><span class="p">,</span>
+        <span class="s2">"provision"</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="s2">"context_only"</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="p">},</span>
+    <span class="p">{</span>
+        <span class="s2">"id"</span><span class="p">:</span> <span class="s2">"park"</span><span class="p">,</span>
+        <span class="s2">"label"</span><span class="p">:</span> <span class="s2">"Парки"</span><span class="p">,</span>
+        <span class="s2">"group"</span><span class="p">:</span> <span class="s2">"nature"</span><span class="p">,</span>
+        <span class="s2">"color"</span><span class="p">:</span> <span class="s2">"#34C759"</span><span class="p">,</span>
+        <span class="s2">"render"</span><span class="p">:</span> <span class="s2">"auto"</span><span class="p">,</span>
+        <span class="s2">"provision"</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="s2">"context_only"</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="p">},</span>
+    <span class="p">{</span>
+        <span class="s2">"id"</span><span class="p">:</span> <span class="s2">"forest"</span><span class="p">,</span>
+        <span class="s2">"label"</span><span class="p">:</span> <span class="s2">"Леса"</span><span class="p">,</span>
+        <span class="s2">"group"</span><span class="p">:</span> <span class="s2">"nature"</span><span class="p">,</span>
+        <span class="s2">"color"</span><span class="p">:</span> <span class="s2">"#30D158"</span><span class="p">,</span>
+        <span class="s2">"render"</span><span class="p">:</span> <span class="s2">"auto"</span><span class="p">,</span>
+        <span class="s2">"provision"</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="s2">"context_only"</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="p">},</span>
+    <span class="p">{</span>
+        <span class="s2">"id"</span><span class="p">:</span> <span class="s2">"reserve"</span><span class="p">,</span>
+        <span class="s2">"label"</span><span class="p">:</span> <span class="s2">"Заповедники"</span><span class="p">,</span>
+        <span class="s2">"group"</span><span class="p">:</span> <span class="s2">"nature"</span><span class="p">,</span>
+        <span class="s2">"color"</span><span class="p">:</span> <span class="s2">"#34C759"</span><span class="p">,</span>
+        <span class="s2">"render"</span><span class="p">:</span> <span class="s2">"auto"</span><span class="p">,</span>
+        <span class="s2">"provision"</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="s2">"context_only"</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="p">},</span>
+    <span class="p">{</span>
+        <span class="s2">"id"</span><span class="p">:</span> <span class="s2">"beach"</span><span class="p">,</span>
+        <span class="s2">"label"</span><span class="p">:</span> <span class="s2">"Пляжи"</span><span class="p">,</span>
+        <span class="s2">"group"</span><span class="p">:</span> <span class="s2">"nature"</span><span class="p">,</span>
+        <span class="s2">"color"</span><span class="p">:</span> <span class="s2">"#64D2FF"</span><span class="p">,</span>
+        <span class="s2">"render"</span><span class="p">:</span> <span class="s2">"auto"</span><span class="p">,</span>
+        <span class="s2">"provision"</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="s2">"context_only"</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="p">},</span>
+    <span class="p">{</span>
+        <span class="s2">"id"</span><span class="p">:</span> <span class="s2">"embankment"</span><span class="p">,</span>
+        <span class="s2">"label"</span><span class="p">:</span> <span class="s2">"Набережные"</span><span class="p">,</span>
+        <span class="s2">"group"</span><span class="p">:</span> <span class="s2">"nature"</span><span class="p">,</span>
+        <span class="s2">"color"</span><span class="p">:</span> <span class="s2">"#64D2FF"</span><span class="p">,</span>
+        <span class="s2">"render"</span><span class="p">:</span> <span class="s2">"auto"</span><span class="p">,</span>
+        <span class="s2">"provision"</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="s2">"context_only"</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="p">},</span>
+    <span class="p">{</span>
+        <span class="s2">"id"</span><span class="p">:</span> <span class="s2">"bus_stop"</span><span class="p">,</span>
+        <span class="s2">"label"</span><span class="p">:</span> <span class="s2">"Остановки"</span><span class="p">,</span>
+        <span class="s2">"group"</span><span class="p">:</span> <span class="s2">"transport"</span><span class="p">,</span>
+        <span class="s2">"color"</span><span class="p">:</span> <span class="s2">"#BF5AF2"</span><span class="p">,</span>
+        <span class="s2">"render"</span><span class="p">:</span> <span class="s2">"auto"</span><span class="p">,</span>
+        <span class="s2">"provision"</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="s2">"context_only"</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="p">},</span>
+    <span class="p">{</span>
+        <span class="s2">"id"</span><span class="p">:</span> <span class="s2">"parking"</span><span class="p">,</span>
+        <span class="s2">"label"</span><span class="p">:</span> <span class="s2">"Парковки"</span><span class="p">,</span>
+        <span class="s2">"group"</span><span class="p">:</span> <span class="s2">"transport"</span><span class="p">,</span>
+        <span class="s2">"color"</span><span class="p">:</span> <span class="s2">"#8E8E93"</span><span class="p">,</span>
+        <span class="s2">"render"</span><span class="p">:</span> <span class="s2">"auto"</span><span class="p">,</span>
+        <span class="s2">"provision"</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="s2">"context_only"</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="p">},</span>
+    <span class="p">{</span>
+        <span class="s2">"id"</span><span class="p">:</span> <span class="s2">"pier"</span><span class="p">,</span>
+        <span class="s2">"label"</span><span class="p">:</span> <span class="s2">"Причалы"</span><span class="p">,</span>
+        <span class="s2">"group"</span><span class="p">:</span> <span class="s2">"transport"</span><span class="p">,</span>
+        <span class="s2">"color"</span><span class="p">:</span> <span class="s2">"#64D2FF"</span><span class="p">,</span>
+        <span class="s2">"render"</span><span class="p">:</span> <span class="s2">"auto"</span><span class="p">,</span>
+        <span class="s2">"provision"</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="s2">"context_only"</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="p">},</span>
+    <span class="p">{</span>
+        <span class="s2">"id"</span><span class="p">:</span> <span class="s2">"port"</span><span class="p">,</span>
+        <span class="s2">"label"</span><span class="p">:</span> <span class="s2">"Порты"</span><span class="p">,</span>
+        <span class="s2">"group"</span><span class="p">:</span> <span class="s2">"transport"</span><span class="p">,</span>
+        <span class="s2">"color"</span><span class="p">:</span> <span class="s2">"#0A84FF"</span><span class="p">,</span>
+        <span class="s2">"render"</span><span class="p">:</span> <span class="s2">"auto"</span><span class="p">,</span>
+        <span class="s2">"provision"</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="s2">"context_only"</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="p">},</span>
+    <span class="p">{</span>
+        <span class="s2">"id"</span><span class="p">:</span> <span class="s2">"train_station"</span><span class="p">,</span>
+        <span class="s2">"label"</span><span class="p">:</span> <span class="s2">"Ж/д станции"</span><span class="p">,</span>
+        <span class="s2">"group"</span><span class="p">:</span> <span class="s2">"transport"</span><span class="p">,</span>
+        <span class="s2">"color"</span><span class="p">:</span> <span class="s2">"#FF375F"</span><span class="p">,</span>
+        <span class="s2">"render"</span><span class="p">:</span> <span class="s2">"auto"</span><span class="p">,</span>
+        <span class="s2">"provision"</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="s2">"context_only"</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="p">},</span>
+    <span class="p">{</span>
+        <span class="s2">"id"</span><span class="p">:</span> <span class="s2">"train_building"</span><span class="p">,</span>
+        <span class="s2">"label"</span><span class="p">:</span> <span class="s2">"Ж/д здания"</span><span class="p">,</span>
+        <span class="s2">"group"</span><span class="p">:</span> <span class="s2">"transport"</span><span class="p">,</span>
+        <span class="s2">"color"</span><span class="p">:</span> <span class="s2">"#FF453A"</span><span class="p">,</span>
+        <span class="s2">"render"</span><span class="p">:</span> <span class="s2">"auto"</span><span class="p">,</span>
+        <span class="s2">"provision"</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="s2">"context_only"</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="p">},</span>
+    <span class="p">{</span>
+        <span class="s2">"id"</span><span class="p">:</span> <span class="s2">"bank"</span><span class="p">,</span>
+        <span class="s2">"label"</span><span class="p">:</span> <span class="s2">"Банки"</span><span class="p">,</span>
+        <span class="s2">"group"</span><span class="p">:</span> <span class="s2">"finance"</span><span class="p">,</span>
+        <span class="s2">"color"</span><span class="p">:</span> <span class="s2">"#0A84FF"</span><span class="p">,</span>
+        <span class="s2">"render"</span><span class="p">:</span> <span class="s2">"auto"</span><span class="p">,</span>
+        <span class="s2">"provision"</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="s2">"context_only"</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="p">},</span>
+    <span class="p">{</span>
+        <span class="s2">"id"</span><span class="p">:</span> <span class="s2">"post_office"</span><span class="p">,</span>
+        <span class="s2">"label"</span><span class="p">:</span> <span class="s2">"Почтовые отделения"</span><span class="p">,</span>
+        <span class="s2">"group"</span><span class="p">:</span> <span class="s2">"finance"</span><span class="p">,</span>
+        <span class="s2">"color"</span><span class="p">:</span> <span class="s2">"#64D2FF"</span><span class="p">,</span>
+        <span class="s2">"render"</span><span class="p">:</span> <span class="s2">"auto"</span><span class="p">,</span>
+        <span class="s2">"provision"</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="s2">"context_only"</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="p">},</span>
+    <span class="p">{</span>
+        <span class="s2">"id"</span><span class="p">:</span> <span class="s2">"mfz"</span><span class="p">,</span>
+        <span class="s2">"label"</span><span class="p">:</span> <span class="s2">"МФЦ"</span><span class="p">,</span>
+        <span class="s2">"group"</span><span class="p">:</span> <span class="s2">"finance"</span><span class="p">,</span>
+        <span class="s2">"color"</span><span class="p">:</span> <span class="s2">"#0A84FF"</span><span class="p">,</span>
+        <span class="s2">"render"</span><span class="p">:</span> <span class="s2">"auto"</span><span class="p">,</span>
+        <span class="s2">"provision"</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="s2">"context_only"</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="p">},</span>
+    <span class="p">{</span>
+        <span class="s2">"id"</span><span class="p">:</span> <span class="s2">"outpost"</span><span class="p">,</span>
+        <span class="s2">"label"</span><span class="p">:</span> <span class="s2">"Пункты полиции"</span><span class="p">,</span>
+        <span class="s2">"group"</span><span class="p">:</span> <span class="s2">"safety"</span><span class="p">,</span>
+        <span class="s2">"color"</span><span class="p">:</span> <span class="s2">"#0A84FF"</span><span class="p">,</span>
+        <span class="s2">"render"</span><span class="p">:</span> <span class="s2">"auto"</span><span class="p">,</span>
+        <span class="s2">"provision"</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="s2">"context_only"</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="p">},</span>
+    <span class="p">{</span>
+        <span class="s2">"id"</span><span class="p">:</span> <span class="s2">"fire_station"</span><span class="p">,</span>
+        <span class="s2">"label"</span><span class="p">:</span> <span class="s2">"Пожарные станции"</span><span class="p">,</span>
+        <span class="s2">"group"</span><span class="p">:</span> <span class="s2">"safety"</span><span class="p">,</span>
+        <span class="s2">"color"</span><span class="p">:</span> <span class="s2">"#FF375F"</span><span class="p">,</span>
+        <span class="s2">"render"</span><span class="p">:</span> <span class="s2">"auto"</span><span class="p">,</span>
+        <span class="s2">"provision"</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="s2">"context_only"</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="p">},</span>
+    <span class="p">{</span>
+        <span class="s2">"id"</span><span class="p">:</span> <span class="s2">"energy"</span><span class="p">,</span>
+        <span class="s2">"label"</span><span class="p">:</span> <span class="s2">"Электроснабжение"</span><span class="p">,</span>
+        <span class="s2">"group"</span><span class="p">:</span> <span class="s2">"engineering"</span><span class="p">,</span>
+        <span class="s2">"color"</span><span class="p">:</span> <span class="s2">"#FF453A"</span><span class="p">,</span>
+        <span class="s2">"render"</span><span class="p">:</span> <span class="s2">"auto"</span><span class="p">,</span>
+        <span class="s2">"provision"</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="s2">"context_only"</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="p">},</span>
+    <span class="p">{</span>
+        <span class="s2">"id"</span><span class="p">:</span> <span class="s2">"boilerhouse"</span><span class="p">,</span>
+        <span class="s2">"label"</span><span class="p">:</span> <span class="s2">"Котельные"</span><span class="p">,</span>
+        <span class="s2">"group"</span><span class="p">:</span> <span class="s2">"engineering"</span><span class="p">,</span>
+        <span class="s2">"color"</span><span class="p">:</span> <span class="s2">"#FF453A"</span><span class="p">,</span>
+        <span class="s2">"render"</span><span class="p">:</span> <span class="s2">"auto"</span><span class="p">,</span>
+        <span class="s2">"provision"</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="s2">"context_only"</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="p">},</span>
+    <span class="p">{</span>
+        <span class="s2">"id"</span><span class="p">:</span> <span class="s2">"substation"</span><span class="p">,</span>
+        <span class="s2">"label"</span><span class="p">:</span> <span class="s2">"Подстанции"</span><span class="p">,</span>
+        <span class="s2">"group"</span><span class="p">:</span> <span class="s2">"engineering"</span><span class="p">,</span>
+        <span class="s2">"color"</span><span class="p">:</span> <span class="s2">"#FFD60A"</span><span class="p">,</span>
+        <span class="s2">"render"</span><span class="p">:</span> <span class="s2">"auto"</span><span class="p">,</span>
+        <span class="s2">"provision"</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="s2">"context_only"</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="p">},</span>
+    <span class="p">{</span>
+        <span class="s2">"id"</span><span class="p">:</span> <span class="s2">"cemetery"</span><span class="p">,</span>
+        <span class="s2">"label"</span><span class="p">:</span> <span class="s2">"Кладбища"</span><span class="p">,</span>
+        <span class="s2">"group"</span><span class="p">:</span> <span class="s2">"other"</span><span class="p">,</span>
+        <span class="s2">"color"</span><span class="p">:</span> <span class="s2">"#8E8E93"</span><span class="p">,</span>
+        <span class="s2">"render"</span><span class="p">:</span> <span class="s2">"auto"</span><span class="p">,</span>
+        <span class="s2">"provision"</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="s2">"context_only"</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="p">},</span>
+<span class="p">]</span>
+
+<span class="n">SERVICE_SPEC_BY_ID</span> <span class="o">=</span> <span class="p">{</span><span class="n">spec</span><span class="p">[</span><span class="s2">"id"</span><span class="p">]:</span> <span class="n">spec</span> <span class="k">for</span> <span class="n">spec</span> <span class="ow">in</span> <span class="n">SERVICE_SPECS</span><span class="p">}</span>
+
+<span class="n">SERVICE_ALIASES</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">"post_office"</span><span class="p">:</span> <span class="s2">"post"</span><span class="p">,</span>
+    <span class="s2">"boilerhouse"</span><span class="p">:</span> <span class="s2">"energy"</span><span class="p">,</span>
+    <span class="s2">"fire_station"</span><span class="p">:</span> <span class="s2">"government"</span><span class="p">,</span>
+    <span class="s2">"camp"</span><span class="p">:</span> <span class="s2">"hotel"</span><span class="p">,</span>
+    <span class="s2">"mfz"</span><span class="p">:</span> <span class="s2">"multifunctional_center"</span><span class="p">,</span>
+    <span class="s2">"outpost"</span><span class="p">:</span> <span class="s2">"police"</span><span class="p">,</span>
+    <span class="s2">"port"</span><span class="p">:</span> <span class="s2">"pier"</span><span class="p">,</span>
+<span class="p">}</span>
+
+<span class="n">SERVICE_CONTEXT_ONLY</span> <span class="o">=</span> <span class="p">{</span><span class="n">spec</span><span class="p">[</span><span class="s2">"id"</span><span class="p">]</span> <span class="k">for</span> <span class="n">spec</span> <span class="ow">in</span> <span class="n">SERVICE_SPECS</span> <span class="k">if</span> <span class="n">spec</span><span class="p">[</span><span class="s2">"context_only"</span><span class="p">]}</span>
+<span class="n">SERVICE_LABELS</span> <span class="o">=</span> <span class="p">{</span><span class="n">spec</span><span class="p">[</span><span class="s2">"id"</span><span class="p">]:</span> <span class="n">spec</span><span class="p">[</span><span class="s2">"label"</span><span class="p">]</span> <span class="k">for</span> <span class="n">spec</span> <span class="ow">in</span> <span class="n">SERVICE_SPECS</span><span class="p">}</span>
+
+<span class="n">CAPACITY_OVERRIDES</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">"supermarket"</span><span class="p">:</span> <span class="mf">1000.0</span><span class="p">,</span>
+    <span class="s2">"convenience"</span><span class="p">:</span> <span class="mf">100.0</span><span class="p">,</span>
+<span class="p">}</span>
+
+<span class="n">PROVISION_COMBINATIONS</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="p">{</span>
+        <span class="s2">"id"</span><span class="p">:</span> <span class="s2">"grocery"</span><span class="p">,</span>
+        <span class="s2">"label"</span><span class="p">:</span> <span class="s2">"Продукты: супермаркеты и магазины у дома"</span><span class="p">,</span>
+        <span class="s2">"short_label"</span><span class="p">:</span> <span class="s2">"Продукты (комб.)"</span><span class="p">,</span>
+        <span class="s2">"group"</span><span class="p">:</span> <span class="s2">"retail"</span><span class="p">,</span>
+        <span class="s2">"components"</span><span class="p">:</span> <span class="p">[</span><span class="s2">"supermarket"</span><span class="p">,</span> <span class="s2">"convenience"</span><span class="p">],</span>
+        <span class="s2">"norm_service"</span><span class="p">:</span> <span class="s2">"supermarket"</span><span class="p">,</span>
+        <span class="s2">"description"</span><span class="p">:</span> <span class="p">(</span>
+            <span class="s2">"Совокупная ёмкость супермаркетов и магазинов у дома в пределах нормативной доступности. "</span>
+            <span class="s2">"Используется норматив супермаркета как более консервативный; ёмкость магазинов у дома "</span>
+            <span class="s2">"учитывается в общем балансе."</span>
+        <span class="p">),</span>
+    <span class="p">},</span>
+    <span class="p">{</span>
+        <span class="s2">"id"</span><span class="p">:</span> <span class="s2">"parks"</span><span class="p">,</span>
+        <span class="s2">"label"</span><span class="p">:</span> <span class="s2">"Парки и заповедники"</span><span class="p">,</span>
+        <span class="s2">"short_label"</span><span class="p">:</span> <span class="s2">"Парки (комб.)"</span><span class="p">,</span>
+        <span class="s2">"group"</span><span class="p">:</span> <span class="s2">"nature"</span><span class="p">,</span>
+        <span class="s2">"components"</span><span class="p">:</span> <span class="p">[</span><span class="s2">"park"</span><span class="p">,</span> <span class="s2">"reserve"</span><span class="p">],</span>
+        <span class="s2">"norm_service"</span><span class="p">:</span> <span class="s2">"park"</span><span class="p">,</span>
+        <span class="s2">"description"</span><span class="p">:</span> <span class="p">(</span>
+            <span class="s2">"Совокупная ёмкость парков и заповедников в пределах нормативной доступности. "</span>
+            <span class="s2">"Используется норматив парка; лес остаётся контекстным слоем и не входит в этот индекс."</span>
+        <span class="p">),</span>
+    <span class="p">},</span>
+<span class="p">]</span>
+
+<span class="n">PROVISION_COMBINATION_BY_ID</span> <span class="o">=</span> <span class="p">{</span><span class="n">item</span><span class="p">[</span><span class="s2">"id"</span><span class="p">]:</span> <span class="n">item</span> <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">PROVISION_COMBINATIONS</span><span class="p">}</span>
+
+
+<div class="viewcode-block" id="resolve_service_type"><a class="viewcode-back" href="../../api/_autosummary/my_package.service_catalog.html#my_package.service_catalog.resolve_service_type">[docs]</a><span class="k">def</span><span class="w"> </span><span class="nf">resolve_service_type</span><span class="p">(</span><span class="n">service_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Return the BlocksNet service type for a source layer identifier."""</span>
+    <span class="k">return</span> <span class="n">SERVICE_ALIASES</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">service_id</span><span class="p">,</span> <span class="n">service_id</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="is_context_only"><a class="viewcode-back" href="../../api/_autosummary/my_package.service_catalog.html#my_package.service_catalog.is_context_only">[docs]</a><span class="k">def</span><span class="w"> </span><span class="nf">is_context_only</span><span class="p">(</span><span class="n">service_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Return True when a layer is displayed but has no provision indicator."""</span>
+    <span class="k">return</span> <span class="n">service_id</span> <span class="ow">in</span> <span class="n">SERVICE_CONTEXT_ONLY</span></div>
+
+
+<div class="viewcode-block" id="service_spec"><a class="viewcode-back" href="../../api/_autosummary/my_package.service_catalog.html#my_package.service_catalog.service_spec">[docs]</a><span class="k">def</span><span class="w"> </span><span class="nf">service_spec</span><span class="p">(</span><span class="n">service_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Return the catalogue entry for a service identifier."""</span>
+    <span class="k">return</span> <span class="n">SERVICE_SPEC_BY_ID</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">service_id</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="service_group"><a class="viewcode-back" href="../../api/_autosummary/my_package.service_catalog.html#my_package.service_catalog.service_group">[docs]</a><span class="k">def</span><span class="w"> </span><span class="nf">service_group</span><span class="p">(</span><span class="n">service_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Return the functional group for a service identifier."""</span>
+    <span class="n">spec</span> <span class="o">=</span> <span class="n">service_spec</span><span class="p">(</span><span class="n">service_id</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">SERVICE_GROUP_BY_ID</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">spec</span><span class="p">[</span><span class="s2">"group"</span><span class="p">])</span> <span class="k">if</span> <span class="n">spec</span> <span class="k">else</span> <span class="kc">None</span></div>
+
+
+<div class="viewcode-block" id="list_service_files"><a class="viewcode-back" href="../../api/_autosummary/my_package.service_catalog.html#my_package.service_catalog.list_service_files">[docs]</a><span class="k">def</span><span class="w"> </span><span class="nf">list_service_files</span><span class="p">(</span><span class="n">services_dir</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">include_context</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Path</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">"""Return service data files mapped to their BlocksNet types."""</span>
+    <span class="n">services_dir</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">services_dir</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">services_dir</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+        <span class="k">return</span> <span class="p">{}</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">blocksnet.config</span><span class="w"> </span><span class="kn">import</span> <span class="n">service_types_config</span>
+
+    <span class="n">known_types</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">service_types_config</span><span class="o">.</span><span class="n">service_types</span><span class="o">.</span><span class="n">index</span><span class="p">)</span>
+    <span class="n">found</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Path</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">path</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">services_dir</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="s2">"*.geojson"</span><span class="p">)):</span>
+        <span class="n">service_id</span> <span class="o">=</span> <span class="n">path</span><span class="o">.</span><span class="n">stem</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">include_context</span> <span class="ow">and</span> <span class="n">is_context_only</span><span class="p">(</span><span class="n">service_id</span><span class="p">):</span>
+            <span class="k">continue</span>
+        <span class="n">service_type</span> <span class="o">=</span> <span class="n">resolve_service_type</span><span class="p">(</span><span class="n">service_id</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">service_type</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">known_types</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="n">found</span><span class="p">[</span><span class="n">service_id</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">service_type</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">found</span></div>
+
+
+<div class="viewcode-block" id="load_service_layer"><a class="viewcode-back" href="../../api/_autosummary/my_package.service_catalog.html#my_package.service_catalog.load_service_layer">[docs]</a><span class="k">def</span><span class="w"> </span><span class="nf">load_service_layer</span><span class="p">(</span>
+    <span class="n">path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">,</span>
+    <span class="n">service_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">crs</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Load a service layer and fill missing capacity by site area or service type."""</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">blocksnet.preprocessing.imputing</span><span class="w"> </span><span class="kn">import</span> <span class="n">impute_services</span>
+
+    <span class="n">layer</span> <span class="o">=</span> <span class="n">gpd</span><span class="o">.</span><span class="n">read_file</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">layer</span><span class="o">.</span><span class="n">crs</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">layer</span> <span class="o">=</span> <span class="n">layer</span><span class="o">.</span><span class="n">set_crs</span><span class="p">(</span><span class="mi">4326</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">crs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">layer</span> <span class="o">=</span> <span class="n">layer</span><span class="o">.</span><span class="n">to_crs</span><span class="p">(</span><span class="n">crs</span><span class="p">)</span>
+    <span class="n">layer</span> <span class="o">=</span> <span class="n">layer</span><span class="p">[</span><span class="n">layer</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">notna</span><span class="p">()</span> <span class="o">&amp;</span> <span class="o">~</span><span class="n">layer</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">is_empty</span><span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+    <span class="k">if</span> <span class="s2">"capacity"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">layer</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
+        <span class="n">layer</span><span class="p">[</span><span class="s2">"capacity"</span><span class="p">]</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">NA</span>
+    <span class="n">layer</span><span class="p">[</span><span class="s2">"capacity"</span><span class="p">]</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">to_numeric</span><span class="p">(</span><span class="n">layer</span><span class="p">[</span><span class="s2">"capacity"</span><span class="p">],</span> <span class="n">errors</span><span class="o">=</span><span class="s2">"coerce"</span><span class="p">)</span>
+    <span class="n">layer</span><span class="p">[</span><span class="s2">"capacity_source"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"source"</span>
+    <span class="n">missing</span> <span class="o">=</span> <span class="n">layer</span><span class="p">[</span><span class="s2">"capacity"</span><span class="p">]</span><span class="o">.</span><span class="n">isna</span><span class="p">()</span> <span class="o">|</span> <span class="p">(</span><span class="n">layer</span><span class="p">[</span><span class="s2">"capacity"</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">)</span>
+    <span class="n">layer</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">missing</span><span class="p">,</span> <span class="s2">"capacity"</span><span class="p">]</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">NA</span>
+    <span class="n">layer</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">missing</span><span class="p">,</span> <span class="s2">"capacity_source"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"missing"</span>
+
+    <span class="n">service_type</span> <span class="o">=</span> <span class="n">resolve_service_type</span><span class="p">(</span><span class="n">service_id</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">is_context_only</span><span class="p">(</span><span class="n">service_id</span><span class="p">)</span> <span class="ow">or</span> <span class="n">service_type</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">_known_service_types</span><span class="p">():</span>
+        <span class="n">layer</span><span class="p">[</span><span class="s2">"capacity_source"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"not_applicable"</span>
+        <span class="k">return</span> <span class="n">layer</span>
+
+    <span class="n">layer</span> <span class="o">=</span> <span class="n">layer</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+    <span class="n">area_capacity</span> <span class="o">=</span> <span class="n">_capacity_from_site_area</span><span class="p">(</span><span class="n">layer</span><span class="p">,</span> <span class="n">service_type</span><span class="p">)</span>
+    <span class="n">area_mask</span> <span class="o">=</span> <span class="n">missing</span> <span class="o">&amp;</span> <span class="n">area_capacity</span><span class="o">.</span><span class="n">notna</span><span class="p">()</span>
+    <span class="n">layer</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">area_mask</span><span class="p">,</span> <span class="s2">"capacity"</span><span class="p">]</span> <span class="o">=</span> <span class="n">area_capacity</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">area_mask</span><span class="p">]</span>
+    <span class="n">layer</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">area_mask</span><span class="p">,</span> <span class="s2">"capacity_source"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"area"</span>
+
+    <span class="n">still_missing</span> <span class="o">=</span> <span class="n">layer</span><span class="p">[</span><span class="s2">"capacity"</span><span class="p">]</span><span class="o">.</span><span class="n">isna</span><span class="p">()</span> <span class="o">|</span> <span class="p">(</span><span class="n">layer</span><span class="p">[</span><span class="s2">"capacity"</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">)</span>
+    <span class="n">override</span> <span class="o">=</span> <span class="n">CAPACITY_OVERRIDES</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">service_id</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">override</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">still_missing</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
+        <span class="n">layer</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">still_missing</span><span class="p">,</span> <span class="s2">"capacity"</span><span class="p">]</span> <span class="o">=</span> <span class="n">override</span>
+        <span class="n">layer</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">still_missing</span><span class="p">,</span> <span class="s2">"capacity_source"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"override"</span>
+
+    <span class="n">still_missing</span> <span class="o">=</span> <span class="n">layer</span><span class="p">[</span><span class="s2">"capacity"</span><span class="p">]</span><span class="o">.</span><span class="n">isna</span><span class="p">()</span> <span class="o">|</span> <span class="p">(</span><span class="n">layer</span><span class="p">[</span><span class="s2">"capacity"</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">still_missing</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
+        <span class="n">imputed</span> <span class="o">=</span> <span class="n">impute_services</span><span class="p">(</span>
+            <span class="n">layer</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">still_missing</span><span class="p">,</span> <span class="p">[</span><span class="s2">"capacity"</span><span class="p">,</span> <span class="s2">"geometry"</span><span class="p">]]</span><span class="o">.</span><span class="n">copy</span><span class="p">(),</span>
+            <span class="n">service_type</span><span class="p">,</span>
+        <span class="p">)[</span><span class="s2">"capacity"</span><span class="p">]</span>
+        <span class="n">layer</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">still_missing</span><span class="p">,</span> <span class="s2">"capacity"</span><span class="p">]</span> <span class="o">=</span> <span class="n">imputed</span>
+        <span class="n">layer</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">still_missing</span><span class="p">,</span> <span class="s2">"capacity_source"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"type"</span>
+    <span class="k">return</span> <span class="n">layer</span></div>
+
+
+<div class="viewcode-block" id="_capacity_from_site_area"><a class="viewcode-back" href="../../api/_autosummary/my_package.service_catalog.html#my_package.service_catalog._capacity_from_site_area">[docs]</a><span class="k">def</span><span class="w"> </span><span class="nf">_capacity_from_site_area</span><span class="p">(</span><span class="n">layer</span><span class="p">:</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">,</span> <span class="n">service_type</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Estimate capacity for polygonal objects using the closest standard site area."""</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">blocksnet.config</span><span class="w"> </span><span class="kn">import</span> <span class="n">service_types_config</span>
+
+    <span class="n">result</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="n">pd</span><span class="o">.</span><span class="n">NA</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="n">layer</span><span class="o">.</span><span class="n">index</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="s2">"Float64"</span><span class="p">)</span>
+    <span class="n">units</span> <span class="o">=</span> <span class="n">service_types_config</span><span class="o">.</span><span class="n">units</span>
+    <span class="n">rows</span> <span class="o">=</span> <span class="n">units</span><span class="p">[</span>
+        <span class="p">(</span><span class="n">units</span><span class="p">[</span><span class="s2">"service_type"</span><span class="p">]</span> <span class="o">==</span> <span class="n">service_type</span><span class="p">)</span>
+        <span class="o">&amp;</span> <span class="p">(</span><span class="n">pd</span><span class="o">.</span><span class="n">to_numeric</span><span class="p">(</span><span class="n">units</span><span class="p">[</span><span class="s2">"site_area"</span><span class="p">],</span> <span class="n">errors</span><span class="o">=</span><span class="s2">"coerce"</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span>
+    <span class="p">]</span>
+    <span class="k">if</span> <span class="n">rows</span><span class="o">.</span><span class="n">empty</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">result</span>
+
+    <span class="n">geometries</span> <span class="o">=</span> <span class="n">layer</span><span class="o">.</span><span class="n">geometry</span>
+    <span class="n">polygon_mask</span> <span class="o">=</span> <span class="n">geometries</span><span class="o">.</span><span class="n">geom_type</span><span class="o">.</span><span class="n">isin</span><span class="p">([</span><span class="s2">"Polygon"</span><span class="p">,</span> <span class="s2">"MultiPolygon"</span><span class="p">])</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">polygon_mask</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
+        <span class="k">return</span> <span class="n">result</span>
+
+    <span class="n">measured</span> <span class="o">=</span> <span class="n">layer</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">polygon_mask</span><span class="p">]</span><span class="o">.</span><span class="n">to_crs</span><span class="p">(</span><span class="mi">3857</span><span class="p">)</span> <span class="k">if</span> <span class="n">layer</span><span class="o">.</span><span class="n">crs</span> <span class="ow">and</span> <span class="n">layer</span><span class="o">.</span><span class="n">crs</span><span class="o">.</span><span class="n">is_geographic</span> <span class="k">else</span> <span class="n">layer</span>
+    <span class="n">areas</span> <span class="o">=</span> <span class="n">measured</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">polygon_mask</span><span class="p">]</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">area</span>
+    <span class="n">reference_areas</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">to_numeric</span><span class="p">(</span><span class="n">rows</span><span class="p">[</span><span class="s2">"site_area"</span><span class="p">],</span> <span class="n">errors</span><span class="o">=</span><span class="s2">"coerce"</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span>
+    <span class="n">reference_capacities</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">to_numeric</span><span class="p">(</span><span class="n">rows</span><span class="p">[</span><span class="s2">"capacity"</span><span class="p">],</span> <span class="n">errors</span><span class="o">=</span><span class="s2">"coerce"</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="n">area</span> <span class="ow">in</span> <span class="n">areas</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">math</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">area</span><span class="p">)</span> <span class="ow">or</span> <span class="n">area</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="n">distance</span> <span class="o">=</span> <span class="p">(</span><span class="n">reference_areas</span> <span class="o">/</span> <span class="n">area</span><span class="p">)</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">ratio</span><span class="p">:</span> <span class="nb">abs</span><span class="p">(</span><span class="n">math</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">ratio</span><span class="p">)))</span>
+        <span class="n">result</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">index</span><span class="p">]</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">reference_capacities</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">distance</span><span class="o">.</span><span class="n">idxmin</span><span class="p">()])</span>
+    <span class="k">return</span> <span class="n">result</span></div>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_known_service_types</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">blocksnet.config</span><span class="w"> </span><span class="kn">import</span> <span class="n">service_types_config</span>
+
+    <span class="k">return</span> <span class="nb">set</span><span class="p">(</span><span class="n">service_types_config</span><span class="o">.</span><span class="n">service_types</span><span class="o">.</span><span class="n">index</span><span class="p">)</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024-2026.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

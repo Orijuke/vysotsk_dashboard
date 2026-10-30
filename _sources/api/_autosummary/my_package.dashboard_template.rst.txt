@@ -1,0 +1,23 @@
+my\_package.dashboard\_template
+===============================
+
+.. automodule:: my_package.dashboard_template
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+

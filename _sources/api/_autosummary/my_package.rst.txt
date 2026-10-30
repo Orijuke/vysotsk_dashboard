@@ -1,0 +1,37 @@
+﻿my\_package
+===========
+
+.. automodule:: my_package
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+
+.. rubric:: Modules
+
+.. autosummary::
+   :toctree:
+   :recursive:
+
+   my_package.accessibility
+   my_package.dashboard
+   my_package.dashboard_template
+   my_package.my_module
+   my_package.provision
+   my_package.service_catalog
+   my_package.statistics
+

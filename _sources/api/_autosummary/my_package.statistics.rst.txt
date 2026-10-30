@@ -1,0 +1,31 @@
+my\_package.statistics
+======================
+
+.. automodule:: my_package.statistics
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+   
+      apply_filters
+      build_statistics_payload
+      compute_statistics
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+

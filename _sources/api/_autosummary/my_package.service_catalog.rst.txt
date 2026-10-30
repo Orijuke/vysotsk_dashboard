@@ -1,0 +1,34 @@
+my\_package.service\_catalog
+============================
+
+.. automodule:: my_package.service_catalog
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+   
+      is_context_only
+      list_service_files
+      load_service_layer
+      resolve_service_type
+      service_group
+      service_spec
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+

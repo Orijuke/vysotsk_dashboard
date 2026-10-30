@@ -1,0 +1,950 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>my_package.dashboard &mdash; MyPackage 0.0.1 documentation</title>
+      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/graphviz.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/doctools.js"></script>
+        <script src="../../_static/sphinx_highlight.js"></script>
+        <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            MyPackage
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../guide/index.html">Гайд по использованию шаблона</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../examples/index.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api/index.html">API documentation</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">MyPackage</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">my_package.dashboard</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for my_package.dashboard</h1><div class="highlight"><pre>
+<span></span><span class="sd">"""Standalone interactive dashboard for urban indicator maps.</span>
+
+<span class="sd">The builder produces a single HTML page with an Apple-inspired minimal UI.</span>
+<span class="sd">Only Leaflet and raster basemaps are loaded from the network; all thematic</span>
+<span class="sd">data (blocks, water, services) is embedded into the page, so the dashboard</span>
+<span class="sd">does not need a tile API key and works with any of the built-in basemaps,</span>
+<span class="sd">including a vector-only "no basemap" mode.</span>
+<span class="sd">"""</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">html</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">math</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">geopandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">gpd</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">shapely.geometry</span><span class="w"> </span><span class="kn">import</span> <span class="n">mapping</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">.dashboard_template</span><span class="w"> </span><span class="kn">import</span> <span class="n">HTML_TEMPLATE</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.service_catalog</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_service_layer</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.statistics</span><span class="w"> </span><span class="kn">import</span> <span class="n">build_statistics_payload</span>
+
+
+<span class="n">PALETTES</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">"sunset"</span><span class="p">:</span> <span class="p">[</span><span class="s2">"#FFF3C4"</span><span class="p">,</span> <span class="s2">"#FFD166"</span><span class="p">,</span> <span class="s2">"#FF9F1C"</span><span class="p">,</span> <span class="s2">"#FF5A5F"</span><span class="p">,</span> <span class="s2">"#B5173B"</span><span class="p">],</span>
+    <span class="s2">"aqua"</span><span class="p">:</span> <span class="p">[</span><span class="s2">"#E5F8FF"</span><span class="p">,</span> <span class="s2">"#8BE8FF"</span><span class="p">,</span> <span class="s2">"#22C7F2"</span><span class="p">,</span> <span class="s2">"#0A84FF"</span><span class="p">,</span> <span class="s2">"#5E5CE6"</span><span class="p">],</span>
+    <span class="s2">"green"</span><span class="p">:</span> <span class="p">[</span><span class="s2">"#EAFBEA"</span><span class="p">,</span> <span class="s2">"#A7F3A0"</span><span class="p">,</span> <span class="s2">"#34C759"</span><span class="p">,</span> <span class="s2">"#0FA958"</span><span class="p">,</span> <span class="s2">"#046A38"</span><span class="p">],</span>
+    <span class="s2">"amber"</span><span class="p">:</span> <span class="p">[</span><span class="s2">"#FFF8E1"</span><span class="p">,</span> <span class="s2">"#FFE08A"</span><span class="p">,</span> <span class="s2">"#FFC300"</span><span class="p">,</span> <span class="s2">"#FF9500"</span><span class="p">,</span> <span class="s2">"#C1121F"</span><span class="p">],</span>
+    <span class="s2">"violet"</span><span class="p">:</span> <span class="p">[</span><span class="s2">"#F5EDFF"</span><span class="p">,</span> <span class="s2">"#D9B8FF"</span><span class="p">,</span> <span class="s2">"#BF5AF2"</span><span class="p">,</span> <span class="s2">"#7D4CFF"</span><span class="p">,</span> <span class="s2">"#4630EB"</span><span class="p">],</span>
+    <span class="s2">"provision"</span><span class="p">:</span> <span class="p">[</span><span class="s2">"#FF453A"</span><span class="p">,</span> <span class="s2">"#FF9F0A"</span><span class="p">,</span> <span class="s2">"#FFD60A"</span><span class="p">,</span> <span class="s2">"#A7F3A0"</span><span class="p">,</span> <span class="s2">"#30D158"</span><span class="p">],</span>
+<span class="p">}</span>
+
+<span class="n">MISSING_COLOR</span> <span class="o">=</span> <span class="s2">"#E5E5EA"</span>
+
+<span class="n">INDICATOR_SPECS</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="p">{</span>
+        <span class="s2">"id"</span><span class="p">:</span> <span class="s2">"population"</span><span class="p">,</span>
+        <span class="s2">"kind"</span><span class="p">:</span> <span class="s2">"numeric"</span><span class="p">,</span>
+        <span class="s2">"label"</span><span class="p">:</span> <span class="s2">"Население"</span><span class="p">,</span>
+        <span class="s2">"group"</span><span class="p">:</span> <span class="s2">"Население и плотность"</span><span class="p">,</span>
+        <span class="s2">"description"</span><span class="p">:</span> <span class="s2">"Численность населения, проживающего в квартале."</span><span class="p">,</span>
+        <span class="s2">"unit"</span><span class="p">:</span> <span class="s2">"чел."</span><span class="p">,</span>
+        <span class="s2">"decimals"</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+        <span class="s2">"format"</span><span class="p">:</span> <span class="s2">"number"</span><span class="p">,</span>
+        <span class="s2">"palette"</span><span class="p">:</span> <span class="s2">"sunset"</span><span class="p">,</span>
+        <span class="s2">"aggregate"</span><span class="p">:</span> <span class="s2">"sum"</span><span class="p">,</span>
+    <span class="p">},</span>
+    <span class="p">{</span>
+        <span class="s2">"id"</span><span class="p">:</span> <span class="s2">"fsi"</span><span class="p">,</span>
+        <span class="s2">"kind"</span><span class="p">:</span> <span class="s2">"numeric"</span><span class="p">,</span>
+        <span class="s2">"label"</span><span class="p">:</span> <span class="s2">"Плотность застройки (FSI)"</span><span class="p">,</span>
+        <span class="s2">"group"</span><span class="p">:</span> <span class="s2">"Население и плотность"</span><span class="p">,</span>
+        <span class="s2">"description"</span><span class="p">:</span> <span class="s2">"Отношение площади застройки к площади квартала."</span><span class="p">,</span>
+        <span class="s2">"unit"</span><span class="p">:</span> <span class="s2">""</span><span class="p">,</span>
+        <span class="s2">"decimals"</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span>
+        <span class="s2">"format"</span><span class="p">:</span> <span class="s2">"number"</span><span class="p">,</span>
+        <span class="s2">"palette"</span><span class="p">:</span> <span class="s2">"aqua"</span><span class="p">,</span>
+    <span class="p">},</span>
+    <span class="p">{</span>
+        <span class="s2">"id"</span><span class="p">:</span> <span class="s2">"gsi"</span><span class="p">,</span>
+        <span class="s2">"kind"</span><span class="p">:</span> <span class="s2">"numeric"</span><span class="p">,</span>
+        <span class="s2">"label"</span><span class="p">:</span> <span class="s2">"Доля застройки (GSI)"</span><span class="p">,</span>
+        <span class="s2">"group"</span><span class="p">:</span> <span class="s2">"Население и плотность"</span><span class="p">,</span>
+        <span class="s2">"description"</span><span class="p">:</span> <span class="s2">"Доля площади квартала, занятая зданиями."</span><span class="p">,</span>
+        <span class="s2">"unit"</span><span class="p">:</span> <span class="s2">""</span><span class="p">,</span>
+        <span class="s2">"decimals"</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span>
+        <span class="s2">"format"</span><span class="p">:</span> <span class="s2">"number"</span><span class="p">,</span>
+        <span class="s2">"palette"</span><span class="p">:</span> <span class="s2">"aqua"</span><span class="p">,</span>
+    <span class="p">},</span>
+    <span class="p">{</span>
+        <span class="s2">"id"</span><span class="p">:</span> <span class="s2">"mxi"</span><span class="p">,</span>
+        <span class="s2">"kind"</span><span class="p">:</span> <span class="s2">"numeric"</span><span class="p">,</span>
+        <span class="s2">"label"</span><span class="p">:</span> <span class="s2">"Интенсивность (MXI)"</span><span class="p">,</span>
+        <span class="s2">"group"</span><span class="p">:</span> <span class="s2">"Население и плотность"</span><span class="p">,</span>
+        <span class="s2">"description"</span><span class="p">:</span> <span class="s2">"Индекс интенсивности застройки квартала."</span><span class="p">,</span>
+        <span class="s2">"unit"</span><span class="p">:</span> <span class="s2">""</span><span class="p">,</span>
+        <span class="s2">"decimals"</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span>
+        <span class="s2">"format"</span><span class="p">:</span> <span class="s2">"number"</span><span class="p">,</span>
+        <span class="s2">"palette"</span><span class="p">:</span> <span class="s2">"aqua"</span><span class="p">,</span>
+    <span class="p">},</span>
+    <span class="p">{</span>
+        <span class="s2">"id"</span><span class="p">:</span> <span class="s2">"l"</span><span class="p">,</span>
+        <span class="s2">"kind"</span><span class="p">:</span> <span class="s2">"numeric"</span><span class="p">,</span>
+        <span class="s2">"label"</span><span class="p">:</span> <span class="s2">"Средняя этажность"</span><span class="p">,</span>
+        <span class="s2">"group"</span><span class="p">:</span> <span class="s2">"Население и плотность"</span><span class="p">,</span>
+        <span class="s2">"description"</span><span class="p">:</span> <span class="s2">"Средняя этажность зданий в квартале."</span><span class="p">,</span>
+        <span class="s2">"unit"</span><span class="p">:</span> <span class="s2">"эт."</span><span class="p">,</span>
+        <span class="s2">"decimals"</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+        <span class="s2">"format"</span><span class="p">:</span> <span class="s2">"number"</span><span class="p">,</span>
+        <span class="s2">"palette"</span><span class="p">:</span> <span class="s2">"aqua"</span><span class="p">,</span>
+    <span class="p">},</span>
+    <span class="p">{</span>
+        <span class="s2">"id"</span><span class="p">:</span> <span class="s2">"osr"</span><span class="p">,</span>
+        <span class="s2">"kind"</span><span class="p">:</span> <span class="s2">"numeric"</span><span class="p">,</span>
+        <span class="s2">"label"</span><span class="p">:</span> <span class="s2">"Открытость застройки (OSR)"</span><span class="p">,</span>
+        <span class="s2">"group"</span><span class="p">:</span> <span class="s2">"Среда и доступность"</span><span class="p">,</span>
+        <span class="s2">"description"</span><span class="p">:</span> <span class="s2">"Отношение свободной площади квартала к площади застройки. OSR не является долей озеленения."</span><span class="p">,</span>
+        <span class="s2">"unit"</span><span class="p">:</span> <span class="s2">""</span><span class="p">,</span>
+        <span class="s2">"decimals"</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span>
+        <span class="s2">"format"</span><span class="p">:</span> <span class="s2">"number"</span><span class="p">,</span>
+        <span class="s2">"palette"</span><span class="p">:</span> <span class="s2">"green"</span><span class="p">,</span>
+    <span class="p">},</span>
+    <span class="p">{</span>
+        <span class="s2">"id"</span><span class="p">:</span> <span class="s2">"green_share"</span><span class="p">,</span>
+        <span class="s2">"kind"</span><span class="p">:</span> <span class="s2">"numeric"</span><span class="p">,</span>
+        <span class="s2">"label"</span><span class="p">:</span> <span class="s2">"Доля зелени"</span><span class="p">,</span>
+        <span class="s2">"group"</span><span class="p">:</span> <span class="s2">"Зелёная инфраструктура"</span><span class="p">,</span>
+        <span class="s2">"description"</span><span class="p">:</span> <span class="s2">"Доля площади квартала, покрытая лесами, парками и озеленёнными территориями landuse."</span><span class="p">,</span>
+        <span class="s2">"unit"</span><span class="p">:</span> <span class="s2">""</span><span class="p">,</span>
+        <span class="s2">"decimals"</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+        <span class="s2">"format"</span><span class="p">:</span> <span class="s2">"percent"</span><span class="p">,</span>
+        <span class="s2">"palette"</span><span class="p">:</span> <span class="s2">"green"</span><span class="p">,</span>
+        <span class="s2">"breaks"</span><span class="p">:</span> <span class="p">[</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.2</span><span class="p">,</span> <span class="mf">0.4</span><span class="p">,</span> <span class="mf">0.6</span><span class="p">,</span> <span class="mf">0.8</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">],</span>
+    <span class="p">},</span>
+    <span class="p">{</span>
+        <span class="s2">"id"</span><span class="p">:</span> <span class="s2">"forest_share"</span><span class="p">,</span>
+        <span class="s2">"kind"</span><span class="p">:</span> <span class="s2">"numeric"</span><span class="p">,</span>
+        <span class="s2">"label"</span><span class="p">:</span> <span class="s2">"Доля леса"</span><span class="p">,</span>
+        <span class="s2">"group"</span><span class="p">:</span> <span class="s2">"Зелёная инфраструктура"</span><span class="p">,</span>
+        <span class="s2">"description"</span><span class="p">:</span> <span class="s2">"Доля площади квартала, занятая лесными полигонами."</span><span class="p">,</span>
+        <span class="s2">"unit"</span><span class="p">:</span> <span class="s2">""</span><span class="p">,</span>
+        <span class="s2">"decimals"</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+        <span class="s2">"format"</span><span class="p">:</span> <span class="s2">"percent"</span><span class="p">,</span>
+        <span class="s2">"palette"</span><span class="p">:</span> <span class="s2">"green"</span><span class="p">,</span>
+        <span class="s2">"breaks"</span><span class="p">:</span> <span class="p">[</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.2</span><span class="p">,</span> <span class="mf">0.4</span><span class="p">,</span> <span class="mf">0.6</span><span class="p">,</span> <span class="mf">0.8</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">],</span>
+    <span class="p">},</span>
+    <span class="p">{</span>
+        <span class="s2">"id"</span><span class="p">:</span> <span class="s2">"park_share"</span><span class="p">,</span>
+        <span class="s2">"kind"</span><span class="p">:</span> <span class="s2">"numeric"</span><span class="p">,</span>
+        <span class="s2">"label"</span><span class="p">:</span> <span class="s2">"Доля парков"</span><span class="p">,</span>
+        <span class="s2">"group"</span><span class="p">:</span> <span class="s2">"Зелёная инфраструктура"</span><span class="p">,</span>
+        <span class="s2">"description"</span><span class="p">:</span> <span class="s2">"Доля площади квартала, занятая парками."</span><span class="p">,</span>
+        <span class="s2">"unit"</span><span class="p">:</span> <span class="s2">""</span><span class="p">,</span>
+        <span class="s2">"decimals"</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+        <span class="s2">"format"</span><span class="p">:</span> <span class="s2">"percent"</span><span class="p">,</span>
+        <span class="s2">"palette"</span><span class="p">:</span> <span class="s2">"green"</span><span class="p">,</span>
+        <span class="s2">"breaks"</span><span class="p">:</span> <span class="p">[</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.2</span><span class="p">,</span> <span class="mf">0.4</span><span class="p">,</span> <span class="mf">0.6</span><span class="p">,</span> <span class="mf">0.8</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">],</span>
+    <span class="p">},</span>
+    <span class="p">{</span>
+        <span class="s2">"id"</span><span class="p">:</span> <span class="s2">"green_m2_per_capita"</span><span class="p">,</span>
+        <span class="s2">"kind"</span><span class="p">:</span> <span class="s2">"numeric"</span><span class="p">,</span>
+        <span class="s2">"label"</span><span class="p">:</span> <span class="s2">"Зелень на человека"</span><span class="p">,</span>
+        <span class="s2">"group"</span><span class="p">:</span> <span class="s2">"Зелёная инфраструктура"</span><span class="p">,</span>
+        <span class="s2">"description"</span><span class="p">:</span> <span class="s2">"Площадь зелени на одного жителя квартала; рассчитывается только при наличии населения."</span><span class="p">,</span>
+        <span class="s2">"unit"</span><span class="p">:</span> <span class="s2">"м²/чел."</span><span class="p">,</span>
+        <span class="s2">"decimals"</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+        <span class="s2">"format"</span><span class="p">:</span> <span class="s2">"number"</span><span class="p">,</span>
+        <span class="s2">"palette"</span><span class="p">:</span> <span class="s2">"green"</span><span class="p">,</span>
+    <span class="p">},</span>
+    <span class="p">{</span>
+        <span class="s2">"id"</span><span class="p">:</span> <span class="s2">"green_access_m"</span><span class="p">,</span>
+        <span class="s2">"kind"</span><span class="p">:</span> <span class="s2">"numeric"</span><span class="p">,</span>
+        <span class="s2">"label"</span><span class="p">:</span> <span class="s2">"Доступ к зелени по дорогам"</span><span class="p">,</span>
+        <span class="s2">"group"</span><span class="p">:</span> <span class="s2">"Зелёная инфраструктура"</span><span class="p">,</span>
+        <span class="s2">"description"</span><span class="p">:</span> <span class="s2">"Расстояние по существующему дорожному графу до парка "</span>
+        <span class="s2">"или публичной озеленённой территории landuse."</span><span class="p">,</span>
+        <span class="s2">"unit"</span><span class="p">:</span> <span class="s2">"м"</span><span class="p">,</span>
+        <span class="s2">"decimals"</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+        <span class="s2">"format"</span><span class="p">:</span> <span class="s2">"number"</span><span class="p">,</span>
+        <span class="s2">"palette"</span><span class="p">:</span> <span class="s2">"green"</span><span class="p">,</span>
+    <span class="p">},</span>
+    <span class="p">{</span>
+        <span class="s2">"id"</span><span class="p">:</span> <span class="s2">"green_access_500"</span><span class="p">,</span>
+        <span class="s2">"kind"</span><span class="p">:</span> <span class="s2">"numeric"</span><span class="p">,</span>
+        <span class="s2">"label"</span><span class="p">:</span> <span class="s2">"Зелень в пределах 500 м"</span><span class="p">,</span>
+        <span class="s2">"group"</span><span class="p">:</span> <span class="s2">"Зелёная инфраструктура"</span><span class="p">,</span>
+        <span class="s2">"description"</span><span class="p">:</span> <span class="p">(</span>
+            <span class="s2">"Доля кварталов, откуда публичная зелень доступна по дорожной "</span>
+            <span class="s2">"или пешеходной сети не дальше 500 м."</span>
+        <span class="p">),</span>
+        <span class="s2">"unit"</span><span class="p">:</span> <span class="s2">""</span><span class="p">,</span>
+        <span class="s2">"decimals"</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+        <span class="s2">"format"</span><span class="p">:</span> <span class="s2">"percent"</span><span class="p">,</span>
+        <span class="s2">"palette"</span><span class="p">:</span> <span class="s2">"green"</span><span class="p">,</span>
+        <span class="s2">"breaks"</span><span class="p">:</span> <span class="p">[</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.2</span><span class="p">,</span> <span class="mf">0.4</span><span class="p">,</span> <span class="mf">0.6</span><span class="p">,</span> <span class="mf">0.8</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">],</span>
+    <span class="p">},</span>
+    <span class="p">{</span>
+        <span class="s2">"id"</span><span class="p">:</span> <span class="s2">"area_accessibility"</span><span class="p">,</span>
+        <span class="s2">"kind"</span><span class="p">:</span> <span class="s2">"numeric"</span><span class="p">,</span>
+        <span class="s2">"label"</span><span class="p">:</span> <span class="s2">"Пешеходная доступность"</span><span class="p">,</span>
+        <span class="s2">"group"</span><span class="p">:</span> <span class="s2">"Среда и доступность"</span><span class="p">,</span>
+        <span class="s2">"description"</span><span class="p">:</span> <span class="s2">"Среднее пешеходное время доступности территории по дорожной или пешеходной сети (5 км/ч)."</span><span class="p">,</span>
+        <span class="s2">"unit"</span><span class="p">:</span> <span class="s2">"мин"</span><span class="p">,</span>
+        <span class="s2">"decimals"</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+        <span class="s2">"format"</span><span class="p">:</span> <span class="s2">"number"</span><span class="p">,</span>
+        <span class="s2">"palette"</span><span class="p">:</span> <span class="s2">"amber"</span><span class="p">,</span>
+    <span class="p">},</span>
+    <span class="p">{</span>
+        <span class="s2">"id"</span><span class="p">:</span> <span class="s2">"land_use"</span><span class="p">,</span>
+        <span class="s2">"kind"</span><span class="p">:</span> <span class="s2">"categorical"</span><span class="p">,</span>
+        <span class="s2">"label"</span><span class="p">:</span> <span class="s2">"Землепользование"</span><span class="p">,</span>
+        <span class="s2">"group"</span><span class="p">:</span> <span class="s2">"Морфология и землепользование"</span><span class="p">,</span>
+        <span class="s2">"description"</span><span class="p">:</span> <span class="s2">"Преобладающий тип землепользования квартала."</span><span class="p">,</span>
+        <span class="s2">"labels"</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s2">"LandUse.RESIDENTIAL"</span><span class="p">:</span> <span class="s2">"Жилая"</span><span class="p">,</span>
+            <span class="s2">"LandUse.BUSINESS"</span><span class="p">:</span> <span class="s2">"Деловая"</span><span class="p">,</span>
+            <span class="s2">"LandUse.RECREATION"</span><span class="p">:</span> <span class="s2">"Рекреация"</span><span class="p">,</span>
+            <span class="s2">"LandUse.INDUSTRIAL"</span><span class="p">:</span> <span class="s2">"Производственная"</span><span class="p">,</span>
+            <span class="s2">"LandUse.AGRICULTURE"</span><span class="p">:</span> <span class="s2">"Сельскохозяйственная"</span><span class="p">,</span>
+            <span class="s2">"LandUse.SPECIAL"</span><span class="p">:</span> <span class="s2">"Специальная"</span><span class="p">,</span>
+            <span class="s2">"LandUse.TRANSPORT"</span><span class="p">:</span> <span class="s2">"Транспортная"</span><span class="p">,</span>
+        <span class="p">},</span>
+        <span class="s2">"colors"</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s2">"LandUse.RESIDENTIAL"</span><span class="p">:</span> <span class="s2">"#FF9F0A"</span><span class="p">,</span>
+            <span class="s2">"LandUse.BUSINESS"</span><span class="p">:</span> <span class="s2">"#0A84FF"</span><span class="p">,</span>
+            <span class="s2">"LandUse.RECREATION"</span><span class="p">:</span> <span class="s2">"#30D158"</span><span class="p">,</span>
+            <span class="s2">"LandUse.INDUSTRIAL"</span><span class="p">:</span> <span class="s2">"#FF453A"</span><span class="p">,</span>
+            <span class="s2">"LandUse.AGRICULTURE"</span><span class="p">:</span> <span class="s2">"#FFD60A"</span><span class="p">,</span>
+            <span class="s2">"LandUse.SPECIAL"</span><span class="p">:</span> <span class="s2">"#BF5AF2"</span><span class="p">,</span>
+            <span class="s2">"LandUse.TRANSPORT"</span><span class="p">:</span> <span class="s2">"#64D2FF"</span><span class="p">,</span>
+        <span class="p">},</span>
+    <span class="p">},</span>
+    <span class="p">{</span>
+        <span class="s2">"id"</span><span class="p">:</span> <span class="s2">"spacematrix_morphotype"</span><span class="p">,</span>
+        <span class="s2">"kind"</span><span class="p">:</span> <span class="s2">"categorical"</span><span class="p">,</span>
+        <span class="s2">"label"</span><span class="p">:</span> <span class="s2">"Морфотип (Spacematrix)"</span><span class="p">,</span>
+        <span class="s2">"group"</span><span class="p">:</span> <span class="s2">"Морфология и землепользование"</span><span class="p">,</span>
+        <span class="s2">"description"</span><span class="p">:</span> <span class="s2">"Морфотип квартала по классификации Spacematrix."</span><span class="p">,</span>
+        <span class="s2">"labels"</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s2">"low-rise low-density non-residential"</span><span class="p">:</span> <span class="s2">"Малоэтажный нежилой"</span><span class="p">,</span>
+            <span class="s2">"low-rise low-density residential"</span><span class="p">:</span> <span class="s2">"Малоэтажный жилой"</span><span class="p">,</span>
+            <span class="s2">"low-rise low-density mixed-use"</span><span class="p">:</span> <span class="s2">"Малоэтажный смешанный"</span><span class="p">,</span>
+            <span class="s2">"mid-rise low-density residential"</span><span class="p">:</span> <span class="s2">"Среднеэтажный жилой"</span><span class="p">,</span>
+            <span class="s2">"high-mid-rise low-density residential"</span><span class="p">:</span> <span class="s2">"Средне-высотный жилой"</span><span class="p">,</span>
+        <span class="p">},</span>
+        <span class="s2">"colors"</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s2">"low-rise low-density non-residential"</span><span class="p">:</span> <span class="s2">"#FF9F0A"</span><span class="p">,</span>
+            <span class="s2">"low-rise low-density residential"</span><span class="p">:</span> <span class="s2">"#0A84FF"</span><span class="p">,</span>
+            <span class="s2">"low-rise low-density mixed-use"</span><span class="p">:</span> <span class="s2">"#BF5AF2"</span><span class="p">,</span>
+            <span class="s2">"mid-rise low-density residential"</span><span class="p">:</span> <span class="s2">"#30D158"</span><span class="p">,</span>
+            <span class="s2">"high-mid-rise low-density residential"</span><span class="p">:</span> <span class="s2">"#FF453A"</span><span class="p">,</span>
+        <span class="p">},</span>
+    <span class="p">},</span>
+    <span class="p">{</span>
+        <span class="s2">"id"</span><span class="p">:</span> <span class="s2">"strelka_morphotype"</span><span class="p">,</span>
+        <span class="s2">"kind"</span><span class="p">:</span> <span class="s2">"categorical"</span><span class="p">,</span>
+        <span class="s2">"label"</span><span class="p">:</span> <span class="s2">"Морфотип (Strelka)"</span><span class="p">,</span>
+        <span class="s2">"group"</span><span class="p">:</span> <span class="s2">"Морфология и землепользование"</span><span class="p">,</span>
+        <span class="s2">"description"</span><span class="p">:</span> <span class="s2">"Морфотип квартала по классификации Strelka."</span><span class="p">,</span>
+        <span class="s2">"labels"</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s2">"low-rise non-residential"</span><span class="p">:</span> <span class="s2">"Малоэтажный нежилой"</span><span class="p">,</span>
+            <span class="s2">"individual residential"</span><span class="p">:</span> <span class="s2">"Индивидуальная жилая застройка"</span><span class="p">,</span>
+            <span class="s2">"low-rise model"</span><span class="p">:</span> <span class="s2">"Малоэтажная типовая застройка"</span><span class="p">,</span>
+            <span class="s2">"mid-rise"</span><span class="p">:</span> <span class="s2">"Среднеэтажная застройка"</span><span class="p">,</span>
+        <span class="p">},</span>
+        <span class="s2">"colors"</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s2">"low-rise non-residential"</span><span class="p">:</span> <span class="s2">"#FF9F0A"</span><span class="p">,</span>
+            <span class="s2">"individual residential"</span><span class="p">:</span> <span class="s2">"#0A84FF"</span><span class="p">,</span>
+            <span class="s2">"low-rise model"</span><span class="p">:</span> <span class="s2">"#BF5AF2"</span><span class="p">,</span>
+            <span class="s2">"mid-rise"</span><span class="p">:</span> <span class="s2">"#30D158"</span><span class="p">,</span>
+        <span class="p">},</span>
+    <span class="p">},</span>
+<span class="p">]</span>
+
+<span class="n">SERVICE_SPECS</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="p">{</span><span class="s2">"id"</span><span class="p">:</span> <span class="s2">"school"</span><span class="p">,</span> <span class="s2">"label"</span><span class="p">:</span> <span class="s2">"Школы"</span><span class="p">,</span> <span class="s2">"color"</span><span class="p">:</span> <span class="s2">"#FF9F0A"</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">"id"</span><span class="p">:</span> <span class="s2">"kindergarten"</span><span class="p">,</span> <span class="s2">"label"</span><span class="p">:</span> <span class="s2">"Детские сады"</span><span class="p">,</span> <span class="s2">"color"</span><span class="p">:</span> <span class="s2">"#FFD60A"</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">"id"</span><span class="p">:</span> <span class="s2">"polyclinic"</span><span class="p">,</span> <span class="s2">"label"</span><span class="p">:</span> <span class="s2">"Поликлиники"</span><span class="p">,</span> <span class="s2">"color"</span><span class="p">:</span> <span class="s2">"#FF453A"</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">"id"</span><span class="p">:</span> <span class="s2">"hospital"</span><span class="p">,</span> <span class="s2">"label"</span><span class="p">:</span> <span class="s2">"Больницы"</span><span class="p">,</span> <span class="s2">"color"</span><span class="p">:</span> <span class="s2">"#FF375F"</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">"id"</span><span class="p">:</span> <span class="s2">"pharmacy"</span><span class="p">,</span> <span class="s2">"label"</span><span class="p">:</span> <span class="s2">"Аптеки"</span><span class="p">,</span> <span class="s2">"color"</span><span class="p">:</span> <span class="s2">"#30D158"</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">"id"</span><span class="p">:</span> <span class="s2">"supermarket"</span><span class="p">,</span> <span class="s2">"label"</span><span class="p">:</span> <span class="s2">"Супермаркеты"</span><span class="p">,</span> <span class="s2">"color"</span><span class="p">:</span> <span class="s2">"#0A84FF"</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">"id"</span><span class="p">:</span> <span class="s2">"convenience"</span><span class="p">,</span> <span class="s2">"label"</span><span class="p">:</span> <span class="s2">"Магазины у дома"</span><span class="p">,</span> <span class="s2">"color"</span><span class="p">:</span> <span class="s2">"#64D2FF"</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">"id"</span><span class="p">:</span> <span class="s2">"bus_stop"</span><span class="p">,</span> <span class="s2">"label"</span><span class="p">:</span> <span class="s2">"Остановки"</span><span class="p">,</span> <span class="s2">"color"</span><span class="p">:</span> <span class="s2">"#BF5AF2"</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">"id"</span><span class="p">:</span> <span class="s2">"park"</span><span class="p">,</span> <span class="s2">"label"</span><span class="p">:</span> <span class="s2">"Парки"</span><span class="p">,</span> <span class="s2">"color"</span><span class="p">:</span> <span class="s2">"#34C759"</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">"id"</span><span class="p">:</span> <span class="s2">"bank"</span><span class="p">,</span> <span class="s2">"label"</span><span class="p">:</span> <span class="s2">"Банки"</span><span class="p">,</span> <span class="s2">"color"</span><span class="p">:</span> <span class="s2">"#0A84FF"</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">"id"</span><span class="p">:</span> <span class="s2">"beach"</span><span class="p">,</span> <span class="s2">"label"</span><span class="p">:</span> <span class="s2">"Пляжи"</span><span class="p">,</span> <span class="s2">"color"</span><span class="p">:</span> <span class="s2">"#64D2FF"</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">"id"</span><span class="p">:</span> <span class="s2">"boilerhouse"</span><span class="p">,</span> <span class="s2">"label"</span><span class="p">:</span> <span class="s2">"Котельные"</span><span class="p">,</span> <span class="s2">"color"</span><span class="p">:</span> <span class="s2">"#FF453A"</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">"id"</span><span class="p">:</span> <span class="s2">"cafe"</span><span class="p">,</span> <span class="s2">"label"</span><span class="p">:</span> <span class="s2">"Кафе"</span><span class="p">,</span> <span class="s2">"color"</span><span class="p">:</span> <span class="s2">"#FF9F0A"</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">"id"</span><span class="p">:</span> <span class="s2">"camp"</span><span class="p">,</span> <span class="s2">"label"</span><span class="p">:</span> <span class="s2">"Детские лагеря"</span><span class="p">,</span> <span class="s2">"color"</span><span class="p">:</span> <span class="s2">"#FFD60A"</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">"id"</span><span class="p">:</span> <span class="s2">"cemetery"</span><span class="p">,</span> <span class="s2">"label"</span><span class="p">:</span> <span class="s2">"Кладбища"</span><span class="p">,</span> <span class="s2">"color"</span><span class="p">:</span> <span class="s2">"#8E8E93"</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">"id"</span><span class="p">:</span> <span class="s2">"embankment"</span><span class="p">,</span> <span class="s2">"label"</span><span class="p">:</span> <span class="s2">"Набережные"</span><span class="p">,</span> <span class="s2">"color"</span><span class="p">:</span> <span class="s2">"#64D2FF"</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">"id"</span><span class="p">:</span> <span class="s2">"energy"</span><span class="p">,</span> <span class="s2">"label"</span><span class="p">:</span> <span class="s2">"Электроснабжение"</span><span class="p">,</span> <span class="s2">"color"</span><span class="p">:</span> <span class="s2">"#FF453A"</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">"id"</span><span class="p">:</span> <span class="s2">"fire_station"</span><span class="p">,</span> <span class="s2">"label"</span><span class="p">:</span> <span class="s2">"Пожарные станции"</span><span class="p">,</span> <span class="s2">"color"</span><span class="p">:</span> <span class="s2">"#FF375F"</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">"id"</span><span class="p">:</span> <span class="s2">"library"</span><span class="p">,</span> <span class="s2">"label"</span><span class="p">:</span> <span class="s2">"Библиотеки"</span><span class="p">,</span> <span class="s2">"color"</span><span class="p">:</span> <span class="s2">"#BF5AF2"</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">"id"</span><span class="p">:</span> <span class="s2">"mfz"</span><span class="p">,</span> <span class="s2">"label"</span><span class="p">:</span> <span class="s2">"МФЦ"</span><span class="p">,</span> <span class="s2">"color"</span><span class="p">:</span> <span class="s2">"#0A84FF"</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">"id"</span><span class="p">:</span> <span class="s2">"outpost"</span><span class="p">,</span> <span class="s2">"label"</span><span class="p">:</span> <span class="s2">"Пункты полиции"</span><span class="p">,</span> <span class="s2">"color"</span><span class="p">:</span> <span class="s2">"#0A84FF"</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">"id"</span><span class="p">:</span> <span class="s2">"parking"</span><span class="p">,</span> <span class="s2">"label"</span><span class="p">:</span> <span class="s2">"Парковки"</span><span class="p">,</span> <span class="s2">"color"</span><span class="p">:</span> <span class="s2">"#8E8E93"</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">"id"</span><span class="p">:</span> <span class="s2">"pier"</span><span class="p">,</span> <span class="s2">"label"</span><span class="p">:</span> <span class="s2">"Причалы"</span><span class="p">,</span> <span class="s2">"color"</span><span class="p">:</span> <span class="s2">"#64D2FF"</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">"id"</span><span class="p">:</span> <span class="s2">"port"</span><span class="p">,</span> <span class="s2">"label"</span><span class="p">:</span> <span class="s2">"Порты"</span><span class="p">,</span> <span class="s2">"color"</span><span class="p">:</span> <span class="s2">"#0A84FF"</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">"id"</span><span class="p">:</span> <span class="s2">"post_office"</span><span class="p">,</span> <span class="s2">"label"</span><span class="p">:</span> <span class="s2">"Почтовые отделения"</span><span class="p">,</span> <span class="s2">"color"</span><span class="p">:</span> <span class="s2">"#64D2FF"</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">"id"</span><span class="p">:</span> <span class="s2">"religion"</span><span class="p">,</span> <span class="s2">"label"</span><span class="p">:</span> <span class="s2">"Религиозные объекты"</span><span class="p">,</span> <span class="s2">"color"</span><span class="p">:</span> <span class="s2">"#BF5AF2"</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">"id"</span><span class="p">:</span> <span class="s2">"reserve"</span><span class="p">,</span> <span class="s2">"label"</span><span class="p">:</span> <span class="s2">"Заповедники"</span><span class="p">,</span> <span class="s2">"color"</span><span class="p">:</span> <span class="s2">"#34C759"</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">"id"</span><span class="p">:</span> <span class="s2">"stadium"</span><span class="p">,</span> <span class="s2">"label"</span><span class="p">:</span> <span class="s2">"Стадионы"</span><span class="p">,</span> <span class="s2">"color"</span><span class="p">:</span> <span class="s2">"#FF9F0A"</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">"id"</span><span class="p">:</span> <span class="s2">"substation"</span><span class="p">,</span> <span class="s2">"label"</span><span class="p">:</span> <span class="s2">"Подстанции"</span><span class="p">,</span> <span class="s2">"color"</span><span class="p">:</span> <span class="s2">"#FFD60A"</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">"id"</span><span class="p">:</span> <span class="s2">"train_building"</span><span class="p">,</span> <span class="s2">"label"</span><span class="p">:</span> <span class="s2">"Ж/д здания"</span><span class="p">,</span> <span class="s2">"color"</span><span class="p">:</span> <span class="s2">"#FF453A"</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">"id"</span><span class="p">:</span> <span class="s2">"train_station"</span><span class="p">,</span> <span class="s2">"label"</span><span class="p">:</span> <span class="s2">"Ж/д станции"</span><span class="p">,</span> <span class="s2">"color"</span><span class="p">:</span> <span class="s2">"#FF375F"</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">"id"</span><span class="p">:</span> <span class="s2">"zoo"</span><span class="p">,</span> <span class="s2">"label"</span><span class="p">:</span> <span class="s2">"Зоопарки"</span><span class="p">,</span> <span class="s2">"color"</span><span class="p">:</span> <span class="s2">"#34C759"</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">"id"</span><span class="p">:</span> <span class="s2">"forest"</span><span class="p">,</span> <span class="s2">"label"</span><span class="p">:</span> <span class="s2">"Леса"</span><span class="p">,</span> <span class="s2">"color"</span><span class="p">:</span> <span class="s2">"#30D158"</span><span class="p">,</span> <span class="s2">"provision"</span><span class="p">:</span> <span class="kc">False</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">"id"</span><span class="p">:</span> <span class="s2">"historic"</span><span class="p">,</span> <span class="s2">"label"</span><span class="p">:</span> <span class="s2">"Исторические места"</span><span class="p">,</span> <span class="s2">"color"</span><span class="p">:</span> <span class="s2">"#BF5AF2"</span><span class="p">,</span> <span class="s2">"provision"</span><span class="p">:</span> <span class="kc">False</span><span class="p">},</span>
+<span class="p">]</span>
+
+<span class="n">PROVISION_SPECS</span> <span class="o">=</span> <span class="p">[(</span><span class="n">spec</span><span class="p">[</span><span class="s2">"id"</span><span class="p">],</span> <span class="n">spec</span><span class="p">[</span><span class="s2">"label"</span><span class="p">])</span> <span class="k">for</span> <span class="n">spec</span> <span class="ow">in</span> <span class="n">SERVICE_SPECS</span> <span class="k">if</span> <span class="n">spec</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"provision"</span><span class="p">,</span> <span class="kc">True</span><span class="p">)]</span>
+
+<span class="k">for</span> <span class="n">_service_id</span><span class="p">,</span> <span class="n">_service_label</span> <span class="ow">in</span> <span class="n">PROVISION_SPECS</span><span class="p">:</span>
+    <span class="n">INDICATOR_SPECS</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+        <span class="p">{</span>
+            <span class="s2">"id"</span><span class="p">:</span> <span class="sa">f</span><span class="s2">"provision_strong_</span><span class="si">{</span><span class="n">_service_id</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+            <span class="s2">"kind"</span><span class="p">:</span> <span class="s2">"numeric"</span><span class="p">,</span>
+            <span class="s2">"label"</span><span class="p">:</span> <span class="sa">f</span><span class="s2">"Обеспеченность: </span><span class="si">{</span><span class="n">_service_label</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+            <span class="s2">"group"</span><span class="p">:</span> <span class="s2">"Обеспеченность сервисами"</span><span class="p">,</span>
+            <span class="s2">"description"</span><span class="p">:</span> <span class="s2">"Доля спроса на услугу, покрытая в пределах нормативной доступности."</span><span class="p">,</span>
+            <span class="s2">"unit"</span><span class="p">:</span> <span class="s2">""</span><span class="p">,</span>
+            <span class="s2">"decimals"</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+            <span class="s2">"format"</span><span class="p">:</span> <span class="s2">"percent"</span><span class="p">,</span>
+            <span class="s2">"palette"</span><span class="p">:</span> <span class="s2">"provision"</span><span class="p">,</span>
+            <span class="s2">"breaks"</span><span class="p">:</span> <span class="p">[</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.2</span><span class="p">,</span> <span class="mf">0.4</span><span class="p">,</span> <span class="mf">0.6</span><span class="p">,</span> <span class="mf">0.8</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">],</span>
+        <span class="p">}</span>
+    <span class="p">)</span>
+
+<span class="n">COMBINED_PROVISION_SPECS</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="p">{</span>
+        <span class="s2">"id"</span><span class="p">:</span> <span class="s2">"grocery"</span><span class="p">,</span>
+        <span class="s2">"label"</span><span class="p">:</span> <span class="s2">"Магазины (супермаркеты + у дома)"</span><span class="p">,</span>
+        <span class="s2">"description"</span><span class="p">:</span> <span class="s2">"Суммарная обеспеченность взаимозаменяемыми магазинами; норматив — супермаркет."</span><span class="p">,</span>
+    <span class="p">},</span>
+    <span class="p">{</span>
+        <span class="s2">"id"</span><span class="p">:</span> <span class="s2">"parks"</span><span class="p">,</span>
+        <span class="s2">"label"</span><span class="p">:</span> <span class="s2">"Парки (парки + заповедники)"</span><span class="p">,</span>
+        <span class="s2">"description"</span><span class="p">:</span> <span class="s2">"Суммарная обеспеченность парками и заповедниками; норматив — парк."</span><span class="p">,</span>
+    <span class="p">},</span>
+<span class="p">]</span>
+
+<span class="k">for</span> <span class="n">_combined</span> <span class="ow">in</span> <span class="n">COMBINED_PROVISION_SPECS</span><span class="p">:</span>
+    <span class="n">INDICATOR_SPECS</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+        <span class="p">{</span>
+            <span class="s2">"id"</span><span class="p">:</span> <span class="sa">f</span><span class="s2">"provision_strong_</span><span class="si">{</span><span class="n">_combined</span><span class="p">[</span><span class="s1">'id'</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+            <span class="s2">"kind"</span><span class="p">:</span> <span class="s2">"numeric"</span><span class="p">,</span>
+            <span class="s2">"label"</span><span class="p">:</span> <span class="sa">f</span><span class="s2">"Обеспеченность: </span><span class="si">{</span><span class="n">_combined</span><span class="p">[</span><span class="s1">'label'</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+            <span class="s2">"group"</span><span class="p">:</span> <span class="s2">"Обеспеченность сервисами"</span><span class="p">,</span>
+            <span class="s2">"description"</span><span class="p">:</span> <span class="n">_combined</span><span class="p">[</span><span class="s2">"description"</span><span class="p">],</span>
+            <span class="s2">"unit"</span><span class="p">:</span> <span class="s2">""</span><span class="p">,</span>
+            <span class="s2">"decimals"</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+            <span class="s2">"format"</span><span class="p">:</span> <span class="s2">"percent"</span><span class="p">,</span>
+            <span class="s2">"palette"</span><span class="p">:</span> <span class="s2">"provision"</span><span class="p">,</span>
+            <span class="s2">"breaks"</span><span class="p">:</span> <span class="p">[</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.2</span><span class="p">,</span> <span class="mf">0.4</span><span class="p">,</span> <span class="mf">0.6</span><span class="p">,</span> <span class="mf">0.8</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">],</span>
+        <span class="p">}</span>
+    <span class="p">)</span>
+
+<span class="n">POLYGON_SERVICES</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">"forest"</span><span class="p">,</span>
+    <span class="s2">"park"</span><span class="p">,</span>
+    <span class="s2">"reserve"</span><span class="p">,</span>
+    <span class="s2">"cemetery"</span><span class="p">,</span>
+    <span class="s2">"historic"</span><span class="p">,</span>
+    <span class="s2">"beach"</span><span class="p">,</span>
+    <span class="s2">"embankment"</span><span class="p">,</span>
+    <span class="s2">"stadium"</span><span class="p">,</span>
+    <span class="s2">"zoo"</span><span class="p">,</span>
+<span class="p">}</span>
+
+<span class="n">BASEMAPS</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="p">{</span>
+        <span class="s2">"id"</span><span class="p">:</span> <span class="s2">"light"</span><span class="p">,</span>
+        <span class="s2">"label"</span><span class="p">:</span> <span class="s2">"Светлая"</span><span class="p">,</span>
+        <span class="s2">"tiles"</span><span class="p">:</span> <span class="p">[</span>
+            <span class="p">{</span>
+                <span class="s2">"url"</span><span class="p">:</span> <span class="p">(</span>
+                    <span class="s2">"https://server.arcgisonline.com/ArcGIS/rest/services/"</span>
+                    <span class="s2">"Canvas/World_Light_Gray_Base/MapServer/tile/</span><span class="si">{z}</span><span class="s2">/</span><span class="si">{y}</span><span class="s2">/</span><span class="si">{x}</span><span class="s2">"</span>
+                <span class="p">),</span>
+                <span class="s2">"attribution"</span><span class="p">:</span> <span class="s2">"Tiles &amp;copy; Esri"</span><span class="p">,</span>
+                <span class="s2">"maxNativeZoom"</span><span class="p">:</span> <span class="mi">16</span><span class="p">,</span>
+            <span class="p">},</span>
+            <span class="p">{</span>
+                <span class="s2">"url"</span><span class="p">:</span> <span class="p">(</span>
+                    <span class="s2">"https://server.arcgisonline.com/ArcGIS/rest/services/"</span>
+                    <span class="s2">"Canvas/World_Light_Gray_Reference/MapServer/tile/</span><span class="si">{z}</span><span class="s2">/</span><span class="si">{y}</span><span class="s2">/</span><span class="si">{x}</span><span class="s2">"</span>
+                <span class="p">),</span>
+                <span class="s2">"maxNativeZoom"</span><span class="p">:</span> <span class="mi">16</span><span class="p">,</span>
+            <span class="p">},</span>
+        <span class="p">],</span>
+    <span class="p">},</span>
+    <span class="p">{</span>
+        <span class="s2">"id"</span><span class="p">:</span> <span class="s2">"streets"</span><span class="p">,</span>
+        <span class="s2">"label"</span><span class="p">:</span> <span class="s2">"Улицы"</span><span class="p">,</span>
+        <span class="s2">"tiles"</span><span class="p">:</span> <span class="p">[</span>
+            <span class="p">{</span>
+                <span class="s2">"url"</span><span class="p">:</span> <span class="s2">"https://tile.openstreetmap.org/</span><span class="si">{z}</span><span class="s2">/</span><span class="si">{x}</span><span class="s2">/</span><span class="si">{y}</span><span class="s2">.png"</span><span class="p">,</span>
+                <span class="s2">"attribution"</span><span class="p">:</span> <span class="s2">"&amp;copy; OpenStreetMap contributors"</span><span class="p">,</span>
+                <span class="s2">"maxNativeZoom"</span><span class="p">:</span> <span class="mi">19</span><span class="p">,</span>
+            <span class="p">}</span>
+        <span class="p">],</span>
+    <span class="p">},</span>
+    <span class="p">{</span>
+        <span class="s2">"id"</span><span class="p">:</span> <span class="s2">"dark"</span><span class="p">,</span>
+        <span class="s2">"label"</span><span class="p">:</span> <span class="s2">"Тёмная"</span><span class="p">,</span>
+        <span class="s2">"tiles"</span><span class="p">:</span> <span class="p">[</span>
+            <span class="p">{</span>
+                <span class="s2">"url"</span><span class="p">:</span> <span class="p">(</span>
+                    <span class="s2">"https://server.arcgisonline.com/ArcGIS/rest/services/"</span>
+                    <span class="s2">"Canvas/World_Dark_Gray_Base/MapServer/tile/</span><span class="si">{z}</span><span class="s2">/</span><span class="si">{y}</span><span class="s2">/</span><span class="si">{x}</span><span class="s2">"</span>
+                <span class="p">),</span>
+                <span class="s2">"attribution"</span><span class="p">:</span> <span class="s2">"Tiles &amp;copy; Esri"</span><span class="p">,</span>
+                <span class="s2">"maxNativeZoom"</span><span class="p">:</span> <span class="mi">16</span><span class="p">,</span>
+            <span class="p">},</span>
+            <span class="p">{</span>
+                <span class="s2">"url"</span><span class="p">:</span> <span class="p">(</span>
+                    <span class="s2">"https://server.arcgisonline.com/ArcGIS/rest/services/"</span>
+                    <span class="s2">"Canvas/World_Dark_Gray_Reference/MapServer/tile/</span><span class="si">{z}</span><span class="s2">/</span><span class="si">{y}</span><span class="s2">/</span><span class="si">{x}</span><span class="s2">"</span>
+                <span class="p">),</span>
+                <span class="s2">"maxNativeZoom"</span><span class="p">:</span> <span class="mi">16</span><span class="p">,</span>
+            <span class="p">},</span>
+        <span class="p">],</span>
+    <span class="p">},</span>
+    <span class="p">{</span>
+        <span class="s2">"id"</span><span class="p">:</span> <span class="s2">"satellite"</span><span class="p">,</span>
+        <span class="s2">"label"</span><span class="p">:</span> <span class="s2">"Спутник"</span><span class="p">,</span>
+        <span class="s2">"tiles"</span><span class="p">:</span> <span class="p">[</span>
+            <span class="p">{</span>
+                <span class="s2">"url"</span><span class="p">:</span> <span class="s2">"https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/</span><span class="si">{z}</span><span class="s2">/</span><span class="si">{y}</span><span class="s2">/</span><span class="si">{x}</span><span class="s2">"</span><span class="p">,</span>
+                <span class="s2">"attribution"</span><span class="p">:</span> <span class="s2">"Tiles &amp;copy; Esri"</span><span class="p">,</span>
+                <span class="s2">"maxNativeZoom"</span><span class="p">:</span> <span class="mi">19</span><span class="p">,</span>
+            <span class="p">}</span>
+        <span class="p">],</span>
+    <span class="p">},</span>
+    <span class="p">{</span>
+        <span class="s2">"id"</span><span class="p">:</span> <span class="s2">"none"</span><span class="p">,</span>
+        <span class="s2">"label"</span><span class="p">:</span> <span class="s2">"Без подложки"</span><span class="p">,</span>
+        <span class="s2">"tiles"</span><span class="p">:</span> <span class="p">[],</span>
+    <span class="p">},</span>
+<span class="p">]</span>
+
+
+<div class="viewcode-block" id="_clean_value"><a class="viewcode-back" href="../../api/_autosummary/my_package.dashboard.html#my_package.dashboard._clean_value">[docs]</a><span class="k">def</span><span class="w"> </span><span class="nf">_clean_value</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Convert numpy/pandas values into JSON-safe primitives."""</span>
+    <span class="c1"># pylint: disable=too-many-return-statements</span>
+    <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">floating</span><span class="p">,</span> <span class="nb">float</span><span class="p">)):</span>
+        <span class="n">number</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">number</span> <span class="k">if</span> <span class="n">math</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">number</span><span class="p">)</span> <span class="k">else</span> <span class="kc">None</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">integer</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">bool_</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">bool</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">value</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="nb">bool</span><span class="p">)):</span>
+        <span class="k">return</span> <span class="n">value</span>
+    <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="s2">"value"</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">_clean_value</span><span class="p">(</span><span class="n">value</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">pd</span><span class="o">.</span><span class="n">isna</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
+            <span class="k">return</span> <span class="kc">None</span>
+    <span class="k">except</span> <span class="p">(</span><span class="ne">TypeError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">):</span>
+        <span class="k">pass</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">)):</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">_clean_value</span><span class="p">(</span><span class="n">item</span><span class="p">)</span> <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">value</span><span class="p">]</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">{</span><span class="nb">str</span><span class="p">(</span><span class="n">key</span><span class="p">):</span> <span class="n">_clean_value</span><span class="p">(</span><span class="n">item</span><span class="p">)</span> <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">value</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
+    <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="n">value</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="_rounded_geometry"><a class="viewcode-back" href="../../api/_autosummary/my_package.dashboard.html#my_package.dashboard._rounded_geometry">[docs]</a><span class="k">def</span><span class="w"> </span><span class="nf">_rounded_geometry</span><span class="p">(</span><span class="n">geometry</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">ndigits</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">6</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Return a GeoJSON geometry with rounded coordinates."""</span>
+    <span class="k">if</span> <span class="n">geometry</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">geometry</span><span class="o">.</span><span class="n">is_empty</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="n">obj</span> <span class="o">=</span> <span class="n">mapping</span><span class="p">(</span><span class="n">geometry</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">walk</span><span class="p">(</span><span class="n">node</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">)):</span>
+            <span class="k">if</span> <span class="n">node</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">)):</span>
+                <span class="k">return</span> <span class="p">[</span><span class="nb">round</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">item</span><span class="p">),</span> <span class="n">ndigits</span><span class="p">)</span> <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">node</span><span class="p">]</span>
+            <span class="k">return</span> <span class="p">[</span><span class="n">walk</span><span class="p">(</span><span class="n">item</span><span class="p">)</span> <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">node</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">node</span>
+
+    <span class="k">return</span> <span class="p">{</span><span class="s2">"type"</span><span class="p">:</span> <span class="n">obj</span><span class="p">[</span><span class="s2">"type"</span><span class="p">],</span> <span class="s2">"coordinates"</span><span class="p">:</span> <span class="n">walk</span><span class="p">(</span><span class="n">obj</span><span class="p">[</span><span class="s2">"coordinates"</span><span class="p">])}</span></div>
+
+
+<div class="viewcode-block" id="_feature_collection"><a class="viewcode-back" href="../../api/_autosummary/my_package.dashboard.html#my_package.dashboard._feature_collection">[docs]</a><span class="k">def</span><span class="w"> </span><span class="nf">_feature_collection</span><span class="p">(</span><span class="n">gdf</span><span class="p">:</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">,</span> <span class="n">columns</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Build a compact GeoJSON FeatureCollection with cleaned properties."""</span>
+    <span class="k">if</span> <span class="n">gdf</span><span class="o">.</span><span class="n">crs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">gdf</span> <span class="o">=</span> <span class="n">gdf</span><span class="o">.</span><span class="n">to_crs</span><span class="p">(</span><span class="mi">4326</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">columns</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">columns</span> <span class="o">=</span> <span class="p">[</span><span class="n">column</span> <span class="k">for</span> <span class="n">column</span> <span class="ow">in</span> <span class="n">gdf</span><span class="o">.</span><span class="n">columns</span> <span class="k">if</span> <span class="n">column</span> <span class="o">!=</span> <span class="s2">"geometry"</span><span class="p">]</span>
+    <span class="n">records</span> <span class="o">=</span> <span class="n">gdf</span><span class="p">[</span><span class="n">columns</span><span class="p">]</span><span class="o">.</span><span class="n">to_dict</span><span class="p">(</span><span class="s2">"records"</span><span class="p">)</span> <span class="k">if</span> <span class="n">columns</span> <span class="k">else</span> <span class="p">[{}</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">gdf</span><span class="p">))]</span>
+    <span class="n">features</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">geometry</span><span class="p">,</span> <span class="n">record</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">gdf</span><span class="o">.</span><span class="n">geometry</span><span class="p">,</span> <span class="n">records</span><span class="p">):</span>
+        <span class="n">rounded</span> <span class="o">=</span> <span class="n">_rounded_geometry</span><span class="p">(</span><span class="n">geometry</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">rounded</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="n">features</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="p">{</span>
+                <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"Feature"</span><span class="p">,</span>
+                <span class="s2">"properties"</span><span class="p">:</span> <span class="p">{</span><span class="n">column</span><span class="p">:</span> <span class="n">_clean_value</span><span class="p">(</span><span class="n">record</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">column</span><span class="p">))</span> <span class="k">for</span> <span class="n">column</span> <span class="ow">in</span> <span class="n">columns</span><span class="p">},</span>
+                <span class="s2">"geometry"</span><span class="p">:</span> <span class="n">rounded</span><span class="p">,</span>
+            <span class="p">}</span>
+        <span class="p">)</span>
+    <span class="k">return</span> <span class="p">{</span><span class="s2">"type"</span><span class="p">:</span> <span class="s2">"FeatureCollection"</span><span class="p">,</span> <span class="s2">"features"</span><span class="p">:</span> <span class="n">features</span><span class="p">}</span></div>
+
+
+<div class="viewcode-block" id="_numeric_breaks"><a class="viewcode-back" href="../../api/_autosummary/my_package.dashboard.html#my_package.dashboard._numeric_breaks">[docs]</a><span class="k">def</span><span class="w"> </span><span class="nf">_numeric_breaks</span><span class="p">(</span><span class="n">series</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">fixed</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">classes</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">5</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Build break points for a quantile colour scale, keeping zero values readable."""</span>
+    <span class="k">if</span> <span class="n">fixed</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">[</span><span class="nb">float</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="k">for</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">fixed</span><span class="p">]</span>
+    <span class="n">values</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">to_numeric</span><span class="p">(</span><span class="n">series</span><span class="p">,</span> <span class="n">errors</span><span class="o">=</span><span class="s2">"coerce"</span><span class="p">)</span><span class="o">.</span><span class="n">dropna</span><span class="p">()</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+    <span class="n">values</span> <span class="o">=</span> <span class="n">values</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">values</span><span class="p">)]</span>
+    <span class="k">if</span> <span class="n">values</span><span class="o">.</span><span class="n">size</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">[</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.2</span><span class="p">,</span> <span class="mf">0.4</span><span class="p">,</span> <span class="mf">0.6</span><span class="p">,</span> <span class="mf">0.8</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">]</span>
+    <span class="n">low</span><span class="p">,</span> <span class="n">high</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">values</span><span class="o">.</span><span class="n">min</span><span class="p">()),</span> <span class="nb">float</span><span class="p">(</span><span class="n">values</span><span class="o">.</span><span class="n">max</span><span class="p">())</span>
+    <span class="k">if</span> <span class="n">math</span><span class="o">.</span><span class="n">isclose</span><span class="p">(</span><span class="n">low</span><span class="p">,</span> <span class="n">high</span><span class="p">):</span>
+        <span class="n">step</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="nb">abs</span><span class="p">(</span><span class="n">low</span><span class="p">)</span> <span class="o">*</span> <span class="mf">0.1</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">low</span> <span class="o">+</span> <span class="n">index</span> <span class="o">*</span> <span class="n">step</span> <span class="k">for</span> <span class="n">index</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">classes</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)]</span>
+    <span class="n">positive</span> <span class="o">=</span> <span class="n">values</span><span class="p">[</span><span class="n">values</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">positive</span><span class="o">.</span><span class="n">size</span> <span class="o">&gt;=</span> <span class="n">classes</span> <span class="o">*</span> <span class="mi">2</span> <span class="ow">and</span> <span class="nb">float</span><span class="p">((</span><span class="n">values</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">())</span> <span class="o">&gt;=</span> <span class="mf">0.1</span><span class="p">:</span>
+        <span class="n">quantiles</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">quantile</span><span class="p">(</span><span class="n">positive</span><span class="p">,</span> <span class="p">[</span><span class="mf">0.2</span><span class="p">,</span> <span class="mf">0.4</span><span class="p">,</span> <span class="mf">0.6</span><span class="p">,</span> <span class="mf">0.8</span><span class="p">])</span>
+        <span class="n">breaks</span> <span class="o">=</span> <span class="p">[</span><span class="mf">0.0</span><span class="p">,</span> <span class="o">*</span><span class="p">[</span><span class="nb">float</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="k">for</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">quantiles</span><span class="p">],</span> <span class="n">high</span><span class="p">]</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">quantiles</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">quantile</span><span class="p">(</span><span class="n">values</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">classes</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span>
+        <span class="n">breaks</span> <span class="o">=</span> <span class="p">[</span><span class="nb">float</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="k">for</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">quantiles</span><span class="p">]</span>
+    <span class="n">breaks</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">low</span>
+    <span class="n">breaks</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">high</span>
+    <span class="k">return</span> <span class="p">[</span><span class="nb">round</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="mi">6</span><span class="p">)</span> <span class="k">for</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">breaks</span><span class="p">]</span></div>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_numeric_cards</span><span class="p">(</span><span class="n">spec</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">series</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]:</span>
+    <span class="n">clean</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">to_numeric</span><span class="p">(</span><span class="n">series</span><span class="p">,</span> <span class="n">errors</span><span class="o">=</span><span class="s2">"coerce"</span><span class="p">)</span><span class="o">.</span><span class="n">dropna</span><span class="p">()</span>
+    <span class="n">decimals</span> <span class="o">=</span> <span class="n">spec</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"decimals"</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+    <span class="n">number_format</span> <span class="o">=</span> <span class="n">spec</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"format"</span><span class="p">,</span> <span class="s2">"number"</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">card</span><span class="p">(</span><span class="n">label</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">fmt</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">digits</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">"label"</span><span class="p">:</span> <span class="n">label</span><span class="p">,</span>
+            <span class="s2">"value"</span><span class="p">:</span> <span class="kc">None</span> <span class="k">if</span> <span class="n">close_nan</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="k">else</span> <span class="nb">float</span><span class="p">(</span><span class="n">value</span><span class="p">),</span>
+            <span class="s2">"format"</span><span class="p">:</span> <span class="n">fmt</span> <span class="ow">or</span> <span class="n">number_format</span><span class="p">,</span>
+            <span class="s2">"decimals"</span><span class="p">:</span> <span class="n">decimals</span> <span class="k">if</span> <span class="n">digits</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">digits</span><span class="p">,</span>
+        <span class="p">}</span>
+
+    <span class="k">if</span> <span class="n">spec</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"aggregate"</span><span class="p">)</span> <span class="o">==</span> <span class="s2">"sum"</span><span class="p">:</span>
+        <span class="n">cards</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">card</span><span class="p">(</span><span class="s2">"Сумма"</span><span class="p">,</span> <span class="n">clean</span><span class="o">.</span><span class="n">sum</span><span class="p">()),</span>
+            <span class="n">card</span><span class="p">(</span><span class="s2">"Медиана"</span><span class="p">,</span> <span class="n">clean</span><span class="o">.</span><span class="n">median</span><span class="p">()),</span>
+            <span class="n">card</span><span class="p">(</span><span class="s2">"Среднее"</span><span class="p">,</span> <span class="n">clean</span><span class="o">.</span><span class="n">mean</span><span class="p">()),</span>
+            <span class="n">card</span><span class="p">(</span><span class="s2">"Максимум"</span><span class="p">,</span> <span class="n">clean</span><span class="o">.</span><span class="n">max</span><span class="p">()),</span>
+        <span class="p">]</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">cards</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">card</span><span class="p">(</span><span class="s2">"Медиана"</span><span class="p">,</span> <span class="n">clean</span><span class="o">.</span><span class="n">median</span><span class="p">()),</span>
+            <span class="n">card</span><span class="p">(</span><span class="s2">"Среднее"</span><span class="p">,</span> <span class="n">clean</span><span class="o">.</span><span class="n">mean</span><span class="p">()),</span>
+            <span class="n">card</span><span class="p">(</span><span class="s2">"Максимум"</span><span class="p">,</span> <span class="n">clean</span><span class="o">.</span><span class="n">max</span><span class="p">()),</span>
+            <span class="n">card</span><span class="p">(</span><span class="s2">"Кварталов"</span><span class="p">,</span> <span class="n">clean</span><span class="o">.</span><span class="n">size</span><span class="p">,</span> <span class="s2">"count"</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>
+        <span class="p">]</span>
+    <span class="k">return</span> <span class="n">cards</span>
+
+
+<div class="viewcode-block" id="close_nan"><a class="viewcode-back" href="../../api/_autosummary/my_package.dashboard.html#my_package.dashboard.close_nan">[docs]</a><span class="k">def</span><span class="w"> </span><span class="nf">close_nan</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Return True when a value is missing."""</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">return</span> <span class="nb">bool</span><span class="p">(</span><span class="n">pd</span><span class="o">.</span><span class="n">isna</span><span class="p">(</span><span class="n">value</span><span class="p">))</span>
+    <span class="k">except</span> <span class="p">(</span><span class="ne">TypeError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">value</span> <span class="ow">is</span> <span class="kc">None</span></div>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_numeric_indicator</span><span class="p">(</span><span class="n">results</span><span class="p">:</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">,</span> <span class="n">spec</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+    <span class="n">series</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">to_numeric</span><span class="p">(</span><span class="n">results</span><span class="p">[</span><span class="n">spec</span><span class="p">[</span><span class="s2">"id"</span><span class="p">]],</span> <span class="n">errors</span><span class="o">=</span><span class="s2">"coerce"</span><span class="p">)</span>
+    <span class="n">clean</span> <span class="o">=</span> <span class="n">series</span><span class="o">.</span><span class="n">dropna</span><span class="p">()</span>
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="s2">"id"</span><span class="p">:</span> <span class="n">spec</span><span class="p">[</span><span class="s2">"id"</span><span class="p">],</span>
+        <span class="s2">"kind"</span><span class="p">:</span> <span class="s2">"numeric"</span><span class="p">,</span>
+        <span class="s2">"label"</span><span class="p">:</span> <span class="n">spec</span><span class="p">[</span><span class="s2">"label"</span><span class="p">],</span>
+        <span class="s2">"group"</span><span class="p">:</span> <span class="n">spec</span><span class="p">[</span><span class="s2">"group"</span><span class="p">],</span>
+        <span class="s2">"description"</span><span class="p">:</span> <span class="n">spec</span><span class="p">[</span><span class="s2">"description"</span><span class="p">],</span>
+        <span class="s2">"unit"</span><span class="p">:</span> <span class="n">spec</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"unit"</span><span class="p">,</span> <span class="s2">""</span><span class="p">),</span>
+        <span class="s2">"decimals"</span><span class="p">:</span> <span class="n">spec</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"decimals"</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>
+        <span class="s2">"format"</span><span class="p">:</span> <span class="n">spec</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"format"</span><span class="p">,</span> <span class="s2">"number"</span><span class="p">),</span>
+        <span class="s2">"palette"</span><span class="p">:</span> <span class="n">PALETTES</span><span class="p">[</span><span class="n">spec</span><span class="p">[</span><span class="s2">"palette"</span><span class="p">]],</span>
+        <span class="s2">"breaks"</span><span class="p">:</span> <span class="n">_numeric_breaks</span><span class="p">(</span><span class="n">series</span><span class="p">,</span> <span class="n">spec</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"breaks"</span><span class="p">)),</span>
+        <span class="s2">"stats"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"cards"</span><span class="p">:</span> <span class="n">_numeric_cards</span><span class="p">(</span><span class="n">spec</span><span class="p">,</span> <span class="n">series</span><span class="p">)},</span>
+        <span class="s2">"count"</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">clean</span><span class="o">.</span><span class="n">size</span><span class="p">),</span>
+        <span class="s2">"missing"</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">series</span><span class="o">.</span><span class="n">isna</span><span class="p">()</span><span class="o">.</span><span class="n">sum</span><span class="p">()),</span>
+    <span class="p">}</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_categorical_indicator</span><span class="p">(</span><span class="n">results</span><span class="p">:</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">,</span> <span class="n">spec</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+    <span class="n">raw</span> <span class="o">=</span> <span class="n">results</span><span class="p">[</span><span class="n">spec</span><span class="p">[</span><span class="s2">"id"</span><span class="p">]]</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="n">_clean_value</span><span class="p">)</span>
+    <span class="n">counts</span> <span class="o">=</span> <span class="n">raw</span><span class="o">.</span><span class="n">value_counts</span><span class="p">(</span><span class="n">dropna</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">total</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">raw</span><span class="p">))</span>
+    <span class="n">categories</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="k">for</span> <span class="n">value</span><span class="p">,</span> <span class="n">count</span> <span class="ow">in</span> <span class="n">counts</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="n">key</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+        <span class="n">categories</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="p">{</span>
+                <span class="s2">"value"</span><span class="p">:</span> <span class="n">key</span><span class="p">,</span>
+                <span class="s2">"label"</span><span class="p">:</span> <span class="n">spec</span><span class="p">[</span><span class="s2">"labels"</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">key</span><span class="p">),</span>
+                <span class="s2">"color"</span><span class="p">:</span> <span class="n">spec</span><span class="p">[</span><span class="s2">"colors"</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="s2">"#8E8E93"</span><span class="p">),</span>
+                <span class="s2">"count"</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">count</span><span class="p">),</span>
+                <span class="s2">"share"</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">count</span> <span class="o">/</span> <span class="n">total</span><span class="p">)</span> <span class="k">if</span> <span class="n">total</span> <span class="k">else</span> <span class="mf">0.0</span><span class="p">,</span>
+            <span class="p">}</span>
+        <span class="p">)</span>
+
+    <span class="n">missing</span> <span class="o">=</span> <span class="n">total</span> <span class="o">-</span> <span class="nb">int</span><span class="p">(</span><span class="n">counts</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span>
+    <span class="k">if</span> <span class="n">missing</span><span class="p">:</span>
+        <span class="n">categories</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="p">{</span>
+                <span class="s2">"value"</span><span class="p">:</span> <span class="s2">"__missing__"</span><span class="p">,</span>
+                <span class="s2">"label"</span><span class="p">:</span> <span class="s2">"Нет данных"</span><span class="p">,</span>
+                <span class="s2">"color"</span><span class="p">:</span> <span class="n">MISSING_COLOR</span><span class="p">,</span>
+                <span class="s2">"count"</span><span class="p">:</span> <span class="n">missing</span><span class="p">,</span>
+                <span class="s2">"share"</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">missing</span> <span class="o">/</span> <span class="n">total</span><span class="p">)</span> <span class="k">if</span> <span class="n">total</span> <span class="k">else</span> <span class="mf">0.0</span><span class="p">,</span>
+                <span class="s2">"missing"</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+            <span class="p">}</span>
+        <span class="p">)</span>
+
+    <span class="n">populated</span> <span class="o">=</span> <span class="p">[</span><span class="n">category</span> <span class="k">for</span> <span class="n">category</span> <span class="ow">in</span> <span class="n">categories</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">category</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"missing"</span><span class="p">)]</span>
+    <span class="n">dominant</span> <span class="o">=</span> <span class="n">populated</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="n">populated</span> <span class="k">else</span> <span class="kc">None</span>
+    <span class="n">cards</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="p">{</span>
+            <span class="s2">"label"</span><span class="p">:</span> <span class="s2">"Доминирует"</span><span class="p">,</span>
+            <span class="s2">"value"</span><span class="p">:</span> <span class="n">dominant</span><span class="p">[</span><span class="s2">"label"</span><span class="p">]</span> <span class="k">if</span> <span class="n">dominant</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="s2">"format"</span><span class="p">:</span> <span class="s2">"text"</span><span class="p">,</span>
+            <span class="s2">"decimals"</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+        <span class="p">},</span>
+        <span class="p">{</span>
+            <span class="s2">"label"</span><span class="p">:</span> <span class="s2">"Доля"</span><span class="p">,</span>
+            <span class="s2">"value"</span><span class="p">:</span> <span class="n">dominant</span><span class="p">[</span><span class="s2">"share"</span><span class="p">]</span> <span class="k">if</span> <span class="n">dominant</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="s2">"format"</span><span class="p">:</span> <span class="s2">"percent"</span><span class="p">,</span>
+            <span class="s2">"decimals"</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+        <span class="p">},</span>
+        <span class="p">{</span><span class="s2">"label"</span><span class="p">:</span> <span class="s2">"Кварталов"</span><span class="p">,</span> <span class="s2">"value"</span><span class="p">:</span> <span class="n">total</span> <span class="o">-</span> <span class="n">missing</span><span class="p">,</span> <span class="s2">"format"</span><span class="p">:</span> <span class="s2">"count"</span><span class="p">,</span> <span class="s2">"decimals"</span><span class="p">:</span> <span class="mi">0</span><span class="p">},</span>
+        <span class="p">{</span><span class="s2">"label"</span><span class="p">:</span> <span class="s2">"Категорий"</span><span class="p">,</span> <span class="s2">"value"</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">populated</span><span class="p">),</span> <span class="s2">"format"</span><span class="p">:</span> <span class="s2">"count"</span><span class="p">,</span> <span class="s2">"decimals"</span><span class="p">:</span> <span class="mi">0</span><span class="p">},</span>
+    <span class="p">]</span>
+
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="s2">"id"</span><span class="p">:</span> <span class="n">spec</span><span class="p">[</span><span class="s2">"id"</span><span class="p">],</span>
+        <span class="s2">"kind"</span><span class="p">:</span> <span class="s2">"categorical"</span><span class="p">,</span>
+        <span class="s2">"label"</span><span class="p">:</span> <span class="n">spec</span><span class="p">[</span><span class="s2">"label"</span><span class="p">],</span>
+        <span class="s2">"group"</span><span class="p">:</span> <span class="n">spec</span><span class="p">[</span><span class="s2">"group"</span><span class="p">],</span>
+        <span class="s2">"description"</span><span class="p">:</span> <span class="n">spec</span><span class="p">[</span><span class="s2">"description"</span><span class="p">],</span>
+        <span class="s2">"unit"</span><span class="p">:</span> <span class="s2">""</span><span class="p">,</span>
+        <span class="s2">"decimals"</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+        <span class="s2">"format"</span><span class="p">:</span> <span class="s2">"text"</span><span class="p">,</span>
+        <span class="s2">"categories"</span><span class="p">:</span> <span class="n">categories</span><span class="p">,</span>
+        <span class="s2">"stats"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"cards"</span><span class="p">:</span> <span class="n">cards</span><span class="p">},</span>
+        <span class="s2">"count"</span><span class="p">:</span> <span class="n">total</span> <span class="o">-</span> <span class="n">missing</span><span class="p">,</span>
+        <span class="s2">"missing"</span><span class="p">:</span> <span class="n">missing</span><span class="p">,</span>
+    <span class="p">}</span>
+
+
+<div class="viewcode-block" id="_accessibility_payload"><a class="viewcode-back" href="../../api/_autosummary/my_package.dashboard.html#my_package.dashboard._accessibility_payload">[docs]</a><span class="k">def</span><span class="w"> </span><span class="nf">_accessibility_payload</span><span class="p">(</span><span class="n">results</span><span class="p">:</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Embed the pedestrian matrix for destination accessibility mode."""</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+        <span class="k">return</span> <span class="p">{</span><span class="s2">"blockIds"</span><span class="p">:</span> <span class="p">[],</span> <span class="s2">"minutes"</span><span class="p">:</span> <span class="p">[]}</span>
+    <span class="n">matrix</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">index_col</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">matrix</span><span class="o">.</span><span class="n">index</span> <span class="o">=</span> <span class="n">matrix</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
+    <span class="n">matrix</span><span class="o">.</span><span class="n">columns</span> <span class="o">=</span> <span class="n">matrix</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
+    <span class="n">matrix</span> <span class="o">=</span> <span class="n">matrix</span><span class="o">.</span><span class="n">reindex</span><span class="p">(</span><span class="n">index</span><span class="o">=</span><span class="n">results</span><span class="o">.</span><span class="n">index</span><span class="p">,</span> <span class="n">columns</span><span class="o">=</span><span class="n">results</span><span class="o">.</span><span class="n">index</span><span class="p">)</span>
+    <span class="n">values</span> <span class="o">=</span> <span class="n">matrix</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+    <span class="n">minutes</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="p">[</span><span class="nb">round</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">value</span><span class="p">),</span> <span class="mi">1</span><span class="p">)</span> <span class="k">if</span> <span class="n">math</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="k">else</span> <span class="kc">None</span> <span class="k">for</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">row</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">values</span>
+    <span class="p">]</span>
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="s2">"blockIds"</span><span class="p">:</span> <span class="n">results</span><span class="p">[</span><span class="s2">"block_id"</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">str</span><span class="p">)</span><span class="o">.</span><span class="n">tolist</span><span class="p">(),</span>
+        <span class="s2">"minutes"</span><span class="p">:</span> <span class="n">minutes</span><span class="p">,</span>
+    <span class="p">}</span></div>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_services_payload</span><span class="p">(</span><span class="n">services_dir</span><span class="p">:</span> <span class="n">Path</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]:</span>
+    <span class="k">if</span> <span class="n">services_dir</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">[]</span>
+    <span class="n">payload</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">spec</span> <span class="ow">in</span> <span class="n">SERVICE_SPECS</span><span class="p">:</span>
+        <span class="n">candidates</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">services_dir</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">"service_</span><span class="si">{</span><span class="n">spec</span><span class="p">[</span><span class="s1">'id'</span><span class="p">]</span><span class="si">}</span><span class="s2">.geojson"</span><span class="p">,</span>
+            <span class="n">services_dir</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">spec</span><span class="p">[</span><span class="s1">'id'</span><span class="p">]</span><span class="si">}</span><span class="s2">.geojson"</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">path</span> <span class="o">=</span> <span class="nb">next</span><span class="p">((</span><span class="n">candidate</span> <span class="k">for</span> <span class="n">candidate</span> <span class="ow">in</span> <span class="n">candidates</span> <span class="k">if</span> <span class="n">candidate</span><span class="o">.</span><span class="n">exists</span><span class="p">()),</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">path</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="n">service</span> <span class="o">=</span> <span class="n">load_service_layer</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">spec</span><span class="p">[</span><span class="s2">"id"</span><span class="p">],</span> <span class="n">crs</span><span class="o">=</span><span class="mi">4326</span><span class="p">)</span>
+        <span class="n">service</span> <span class="o">=</span> <span class="n">service</span><span class="p">[</span><span class="n">service</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">notna</span><span class="p">()</span> <span class="o">&amp;</span> <span class="o">~</span><span class="n">service</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">is_empty</span><span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">service</span><span class="o">.</span><span class="n">empty</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="n">geometry_types</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">service</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">geom_type</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">geometry_types</span> <span class="o">&lt;=</span> <span class="p">{</span><span class="s2">"Polygon"</span><span class="p">,</span> <span class="s2">"MultiPolygon"</span><span class="p">}:</span>
+            <span class="n">geometry_kind</span> <span class="o">=</span> <span class="s2">"polygon"</span>
+        <span class="k">elif</span> <span class="n">geometry_types</span> <span class="o">&lt;=</span> <span class="p">{</span><span class="s2">"Point"</span><span class="p">,</span> <span class="s2">"MultiPoint"</span><span class="p">}:</span>
+            <span class="n">geometry_kind</span> <span class="o">=</span> <span class="s2">"point"</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">geometry_kind</span> <span class="o">=</span> <span class="s2">"auto"</span>
+        <span class="n">columns</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">column</span>
+            <span class="k">for</span> <span class="n">column</span> <span class="ow">in</span> <span class="p">(</span>
+                <span class="s2">"name"</span><span class="p">,</span>
+                <span class="s2">"name:ru"</span><span class="p">,</span>
+                <span class="s2">"service_name"</span><span class="p">,</span>
+                <span class="s2">"amenity"</span><span class="p">,</span>
+                <span class="s2">"shop"</span><span class="p">,</span>
+                <span class="s2">"leisure"</span><span class="p">,</span>
+                <span class="s2">"brand"</span><span class="p">,</span>
+                <span class="s2">"capacity"</span><span class="p">,</span>
+                <span class="s2">"capacity_source"</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="k">if</span> <span class="n">column</span> <span class="ow">in</span> <span class="n">service</span><span class="o">.</span><span class="n">columns</span>
+        <span class="p">]</span>
+        <span class="n">collection</span> <span class="o">=</span> <span class="n">_feature_collection</span><span class="p">(</span><span class="n">service</span><span class="p">,</span> <span class="n">columns</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">collection</span><span class="p">[</span><span class="s2">"features"</span><span class="p">]:</span>
+            <span class="k">continue</span>
+        <span class="n">payload</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="p">{</span>
+                <span class="s2">"id"</span><span class="p">:</span> <span class="n">spec</span><span class="p">[</span><span class="s2">"id"</span><span class="p">],</span>
+                <span class="s2">"label"</span><span class="p">:</span> <span class="n">spec</span><span class="p">[</span><span class="s2">"label"</span><span class="p">],</span>
+                <span class="s2">"color"</span><span class="p">:</span> <span class="n">spec</span><span class="p">[</span><span class="s2">"color"</span><span class="p">],</span>
+                <span class="s2">"count"</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">collection</span><span class="p">[</span><span class="s2">"features"</span><span class="p">]),</span>
+                <span class="s2">"provision"</span><span class="p">:</span> <span class="sa">f</span><span class="s2">"provision_strong_</span><span class="si">{</span><span class="n">spec</span><span class="p">[</span><span class="s1">'id'</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+                <span class="s2">"geometry"</span><span class="p">:</span> <span class="n">geometry_kind</span><span class="p">,</span>
+                <span class="s2">"polygon"</span><span class="p">:</span> <span class="n">spec</span><span class="p">[</span><span class="s2">"id"</span><span class="p">]</span> <span class="ow">in</span> <span class="n">POLYGON_SERVICES</span> <span class="ow">or</span> <span class="n">geometry_kind</span> <span class="o">==</span> <span class="s2">"polygon"</span><span class="p">,</span>
+                <span class="s2">"geojson"</span><span class="p">:</span> <span class="n">collection</span><span class="p">,</span>
+            <span class="p">}</span>
+        <span class="p">)</span>
+    <span class="k">return</span> <span class="n">payload</span>
+
+
+<div class="viewcode-block" id="build_dashboard"><a class="viewcode-back" href="../../api/_autosummary/my_package.dashboard.html#my_package.dashboard.build_dashboard">[docs]</a><span class="k">def</span><span class="w"> </span><span class="nf">build_dashboard</span><span class="p">(</span>  <span class="c1"># pylint: disable=too-many-locals,too-many-statements</span>
+    <span class="n">results_path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">,</span>
+    <span class="n">output_path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">,</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">boundaries_path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">lakes_path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">services_dir</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">title</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"Высоцкое городское поселение"</span><span class="p">,</span>
+    <span class="n">subtitle</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"Интерактивный профиль городской среды"</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Build and save a standalone interactive HTML dashboard."""</span>
+    <span class="n">results_path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">results_path</span><span class="p">)</span>
+    <span class="n">output_path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">output_path</span><span class="p">)</span>
+    <span class="n">boundaries_path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">boundaries_path</span><span class="p">)</span> <span class="k">if</span> <span class="n">boundaries_path</span> <span class="k">else</span> <span class="kc">None</span>
+    <span class="n">lakes_path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">lakes_path</span><span class="p">)</span> <span class="k">if</span> <span class="n">lakes_path</span> <span class="k">else</span> <span class="kc">None</span>
+    <span class="n">services_dir</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">services_dir</span><span class="p">)</span> <span class="k">if</span> <span class="n">services_dir</span> <span class="k">else</span> <span class="n">results_path</span><span class="o">.</span><span class="n">parent</span>
+
+    <span class="n">results</span> <span class="o">=</span> <span class="n">gpd</span><span class="o">.</span><span class="n">read_file</span><span class="p">(</span><span class="n">results_path</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">results</span><span class="o">.</span><span class="n">crs</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">results</span> <span class="o">=</span> <span class="n">results</span><span class="o">.</span><span class="n">set_crs</span><span class="p">(</span><span class="mi">4326</span><span class="p">)</span>
+    <span class="n">results</span> <span class="o">=</span> <span class="n">results</span><span class="o">.</span><span class="n">to_crs</span><span class="p">(</span><span class="mi">4326</span><span class="p">)</span>
+
+    <span class="n">boundaries</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">if</span> <span class="n">boundaries_path</span> <span class="ow">and</span> <span class="n">boundaries_path</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+        <span class="n">boundaries</span> <span class="o">=</span> <span class="n">gpd</span><span class="o">.</span><span class="n">read_file</span><span class="p">(</span><span class="n">boundaries_path</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">boundaries</span><span class="o">.</span><span class="n">crs</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">boundaries</span> <span class="o">=</span> <span class="n">boundaries</span><span class="o">.</span><span class="n">set_crs</span><span class="p">(</span><span class="mi">4326</span><span class="p">)</span>
+        <span class="n">boundaries</span> <span class="o">=</span> <span class="n">boundaries</span><span class="o">.</span><span class="n">to_crs</span><span class="p">(</span><span class="mi">4326</span><span class="p">)</span>
+
+    <span class="n">lakes</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">if</span> <span class="n">lakes_path</span> <span class="ow">and</span> <span class="n">lakes_path</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+        <span class="n">lakes</span> <span class="o">=</span> <span class="n">gpd</span><span class="o">.</span><span class="n">read_file</span><span class="p">(</span><span class="n">lakes_path</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">lakes</span><span class="o">.</span><span class="n">crs</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">lakes</span> <span class="o">=</span> <span class="n">lakes</span><span class="o">.</span><span class="n">set_crs</span><span class="p">(</span><span class="mi">4326</span><span class="p">)</span>
+        <span class="n">lakes</span> <span class="o">=</span> <span class="n">lakes</span><span class="o">.</span><span class="n">to_crs</span><span class="p">(</span><span class="mi">4326</span><span class="p">)</span>
+        <span class="n">lakes</span> <span class="o">=</span> <span class="n">lakes</span><span class="p">[</span><span class="o">~</span><span class="n">lakes</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">duplicated</span><span class="p">()]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+
+    <span class="n">indicator_ids</span> <span class="o">=</span> <span class="p">[</span><span class="n">spec</span><span class="p">[</span><span class="s2">"id"</span><span class="p">]</span> <span class="k">for</span> <span class="n">spec</span> <span class="ow">in</span> <span class="n">INDICATOR_SPECS</span> <span class="k">if</span> <span class="n">spec</span><span class="p">[</span><span class="s2">"id"</span><span class="p">]</span> <span class="ow">in</span> <span class="n">results</span><span class="o">.</span><span class="n">columns</span><span class="p">]</span>
+    <span class="n">indicators</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">spec</span> <span class="ow">in</span> <span class="n">INDICATOR_SPECS</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">spec</span><span class="p">[</span><span class="s2">"id"</span><span class="p">]</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">results</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="k">if</span> <span class="n">spec</span><span class="p">[</span><span class="s2">"kind"</span><span class="p">]</span> <span class="o">==</span> <span class="s2">"numeric"</span><span class="p">:</span>
+            <span class="n">indicators</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">_numeric_indicator</span><span class="p">(</span><span class="n">results</span><span class="p">,</span> <span class="n">spec</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">indicators</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">_categorical_indicator</span><span class="p">(</span><span class="n">results</span><span class="p">,</span> <span class="n">spec</span><span class="p">))</span>
+
+    <span class="n">land_use_share_columns</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="s2">"residential"</span><span class="p">,</span>
+        <span class="s2">"business"</span><span class="p">,</span>
+        <span class="s2">"recreation"</span><span class="p">,</span>
+        <span class="s2">"industrial"</span><span class="p">,</span>
+        <span class="s2">"agriculture"</span><span class="p">,</span>
+        <span class="s2">"special"</span><span class="p">,</span>
+        <span class="s2">"transport"</span><span class="p">,</span>
+    <span class="p">]</span>
+    <span class="n">block_properties</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">column</span>
+        <span class="k">for</span> <span class="n">column</span> <span class="ow">in</span> <span class="nb">dict</span><span class="o">.</span><span class="n">fromkeys</span><span class="p">(</span>
+            <span class="n">indicator_ids</span> <span class="o">+</span> <span class="n">land_use_share_columns</span> <span class="o">+</span> <span class="p">[</span><span class="s2">"block_id"</span><span class="p">,</span> <span class="s2">"has_building"</span><span class="p">,</span> <span class="s2">"has_population"</span><span class="p">]</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">column</span> <span class="ow">in</span> <span class="n">results</span><span class="o">.</span><span class="n">columns</span>
+    <span class="p">]</span>
+    <span class="n">service_metric_columns</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">column</span>
+        <span class="k">for</span> <span class="n">column</span> <span class="ow">in</span> <span class="n">results</span><span class="o">.</span><span class="n">columns</span>
+        <span class="k">if</span> <span class="n">column</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span>
+            <span class="p">(</span>
+                <span class="s2">"access_time_"</span><span class="p">,</span>
+                <span class="s2">"service_demand_"</span><span class="p">,</span>
+                <span class="s2">"service_served_"</span><span class="p">,</span>
+                <span class="s2">"service_capacity_"</span><span class="p">,</span>
+                <span class="s2">"graph_snap_"</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+    <span class="p">]</span>
+    <span class="n">block_properties</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span>
+        <span class="n">column</span> <span class="k">for</span> <span class="n">column</span> <span class="ow">in</span> <span class="n">service_metric_columns</span> <span class="k">if</span> <span class="n">column</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">block_properties</span>
+    <span class="p">)</span>
+    <span class="n">blocks</span> <span class="o">=</span> <span class="n">_feature_collection</span><span class="p">(</span><span class="n">results</span><span class="p">,</span> <span class="n">block_properties</span><span class="p">)</span>
+    <span class="n">statistics</span> <span class="o">=</span> <span class="n">build_statistics_payload</span><span class="p">(</span><span class="n">results</span><span class="p">,</span> <span class="n">INDICATOR_SPECS</span><span class="p">)</span>
+    <span class="n">empty_collection</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"type"</span><span class="p">:</span> <span class="s2">"FeatureCollection"</span><span class="p">,</span> <span class="s2">"features"</span><span class="p">:</span> <span class="p">[]}</span>
+    <span class="n">land</span> <span class="o">=</span> <span class="n">_feature_collection</span><span class="p">(</span><span class="n">boundaries</span><span class="p">,</span> <span class="p">[])</span> <span class="k">if</span> <span class="n">boundaries</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">empty_collection</span>
+    <span class="n">water</span> <span class="o">=</span> <span class="n">_feature_collection</span><span class="p">(</span><span class="n">lakes</span><span class="p">,</span> <span class="p">[])</span> <span class="k">if</span> <span class="n">lakes</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">empty_collection</span>
+
+    <span class="n">spatial_reference</span> <span class="o">=</span> <span class="n">boundaries</span> <span class="k">if</span> <span class="n">boundaries</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">boundaries</span><span class="o">.</span><span class="n">empty</span> <span class="k">else</span> <span class="n">results</span>
+    <span class="n">min_x</span><span class="p">,</span> <span class="n">min_y</span><span class="p">,</span> <span class="n">max_x</span><span class="p">,</span> <span class="n">max_y</span> <span class="o">=</span> <span class="n">spatial_reference</span><span class="o">.</span><span class="n">total_bounds</span>
+    <span class="n">bounds</span> <span class="o">=</span> <span class="p">[[</span><span class="nb">float</span><span class="p">(</span><span class="n">min_y</span><span class="p">),</span> <span class="nb">float</span><span class="p">(</span><span class="n">min_x</span><span class="p">)],</span> <span class="p">[</span><span class="nb">float</span><span class="p">(</span><span class="n">max_y</span><span class="p">),</span> <span class="nb">float</span><span class="p">(</span><span class="n">max_x</span><span class="p">)]]</span>
+    <span class="n">center</span> <span class="o">=</span> <span class="p">[</span><span class="nb">float</span><span class="p">((</span><span class="n">min_y</span> <span class="o">+</span> <span class="n">max_y</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span><span class="p">),</span> <span class="nb">float</span><span class="p">((</span><span class="n">min_x</span> <span class="o">+</span> <span class="n">max_x</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)]</span>
+    <span class="n">population</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">if</span> <span class="s2">"population"</span> <span class="ow">in</span> <span class="n">results</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
+        <span class="n">population</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">pd</span><span class="o">.</span><span class="n">to_numeric</span><span class="p">(</span><span class="n">results</span><span class="p">[</span><span class="s2">"population"</span><span class="p">],</span> <span class="n">errors</span><span class="o">=</span><span class="s2">"coerce"</span><span class="p">)</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span>
+
+    <span class="n">payload</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">"meta"</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s2">"title"</span><span class="p">:</span> <span class="n">title</span><span class="p">,</span>
+            <span class="s2">"subtitle"</span><span class="p">:</span> <span class="n">subtitle</span><span class="p">,</span>
+            <span class="s2">"bounds"</span><span class="p">:</span> <span class="n">bounds</span><span class="p">,</span>
+            <span class="s2">"center"</span><span class="p">:</span> <span class="n">center</span><span class="p">,</span>
+            <span class="s2">"blockCount"</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">results</span><span class="p">)),</span>
+            <span class="s2">"population"</span><span class="p">:</span> <span class="n">population</span><span class="p">,</span>
+        <span class="p">},</span>
+        <span class="s2">"indicators"</span><span class="p">:</span> <span class="n">indicators</span><span class="p">,</span>
+        <span class="s2">"statistics"</span><span class="p">:</span> <span class="n">statistics</span><span class="p">,</span>
+        <span class="s2">"services"</span><span class="p">:</span> <span class="n">_services_payload</span><span class="p">(</span><span class="n">services_dir</span><span class="p">),</span>
+        <span class="s2">"accessibility"</span><span class="p">:</span> <span class="p">{</span>
+            <span class="o">**</span><span class="n">_accessibility_payload</span><span class="p">(</span>
+                <span class="n">results</span><span class="p">,</span> <span class="n">results_path</span><span class="o">.</span><span class="n">parent</span> <span class="o">/</span> <span class="s2">"accessibility_matrix_pedestrian.csv"</span>
+            <span class="p">),</span>
+            <span class="s2">"drive"</span><span class="p">:</span> <span class="n">_accessibility_payload</span><span class="p">(</span>
+                <span class="n">results</span><span class="p">,</span> <span class="n">results_path</span><span class="o">.</span><span class="n">parent</span> <span class="o">/</span> <span class="s2">"accessibility_matrix_drive.csv"</span>
+            <span class="p">),</span>
+        <span class="p">},</span>
+        <span class="s2">"basemaps"</span><span class="p">:</span> <span class="n">BASEMAPS</span><span class="p">,</span>
+        <span class="s2">"layers"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"blocks"</span><span class="p">:</span> <span class="n">blocks</span><span class="p">,</span> <span class="s2">"land"</span><span class="p">:</span> <span class="n">land</span><span class="p">,</span> <span class="s2">"water"</span><span class="p">:</span> <span class="n">water</span><span class="p">},</span>
+    <span class="p">}</span>
+
+    <span class="n">serialized</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">payload</span><span class="p">,</span> <span class="n">ensure_ascii</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">separators</span><span class="o">=</span><span class="p">(</span><span class="s2">","</span><span class="p">,</span> <span class="s2">":"</span><span class="p">),</span> <span class="n">allow_nan</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">serialized</span> <span class="o">=</span> <span class="n">serialized</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">"&lt;/"</span><span class="p">,</span> <span class="s2">"&lt;</span><span class="se">\\</span><span class="s2">/"</span><span class="p">)</span>
+    <span class="n">document</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">HTML_TEMPLATE</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">"__PAGE_TITLE__"</span><span class="p">,</span> <span class="n">html</span><span class="o">.</span><span class="n">escape</span><span class="p">(</span><span class="n">title</span><span class="p">))</span>
+        <span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">"__TITLE__"</span><span class="p">,</span> <span class="n">html</span><span class="o">.</span><span class="n">escape</span><span class="p">(</span><span class="n">title</span><span class="p">))</span>
+        <span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">"__SUBTITLE__"</span><span class="p">,</span> <span class="n">html</span><span class="o">.</span><span class="n">escape</span><span class="p">(</span><span class="n">subtitle</span><span class="p">))</span>
+        <span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">"__PAYLOAD__"</span><span class="p">,</span> <span class="n">serialized</span><span class="p">)</span>
+    <span class="p">)</span>
+    <span class="n">output_path</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">output_path</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span><span class="n">document</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">"utf-8"</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">output_path</span></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024-2026.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

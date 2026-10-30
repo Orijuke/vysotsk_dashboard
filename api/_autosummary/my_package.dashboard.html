@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>my_package.dashboard &mdash; MyPackage 0.0.1 documentation</title>
+      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/graphviz.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/doctools.js"></script>
+        <script src="../../_static/sphinx_highlight.js"></script>
+        <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="my_package.dashboard_template" href="my_package.dashboard_template.html" />
+    <link rel="prev" title="my_package.accessibility" href="my_package.accessibility.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            MyPackage
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../guide/index.html">Гайд по использованию шаблона</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../examples/index.html">Examples</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../index.html">API documentation</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="my_package.html">my_package</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="my_package.accessibility.html">my_package.accessibility</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">my_package.dashboard</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#my_package.dashboard._clean_value"><code class="docutils literal notranslate"><span class="pre">_clean_value()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#my_package.dashboard._rounded_geometry"><code class="docutils literal notranslate"><span class="pre">_rounded_geometry()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#my_package.dashboard._feature_collection"><code class="docutils literal notranslate"><span class="pre">_feature_collection()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#my_package.dashboard._numeric_breaks"><code class="docutils literal notranslate"><span class="pre">_numeric_breaks()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#my_package.dashboard.close_nan"><code class="docutils literal notranslate"><span class="pre">close_nan()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#my_package.dashboard._accessibility_payload"><code class="docutils literal notranslate"><span class="pre">_accessibility_payload()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#my_package.dashboard.build_dashboard"><code class="docutils literal notranslate"><span class="pre">build_dashboard()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="my_package.dashboard_template.html">my_package.dashboard_template</a></li>
+<li class="toctree-l3"><a class="reference internal" href="my_package.my_module.html">my_package.my_module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="my_package.provision.html">my_package.provision</a></li>
+<li class="toctree-l3"><a class="reference internal" href="my_package.service_catalog.html">my_package.service_catalog</a></li>
+<li class="toctree-l3"><a class="reference internal" href="my_package.statistics.html">my_package.statistics</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">MyPackage</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">API documentation</a></li>
+          <li class="breadcrumb-item"><a href="my_package.html">my_package</a></li>
+      <li class="breadcrumb-item active">my_package.dashboard</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/api/_autosummary/my_package.dashboard.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-my_package.dashboard">
+<span id="my-package-dashboard"></span><h1>my_package.dashboard<a class="headerlink" href="#module-my_package.dashboard" title="Permalink to this heading"></a></h1>
+<p>Standalone interactive dashboard for urban indicator maps.</p>
+<p>The builder produces a single HTML page with an Apple-inspired minimal UI.
+Only Leaflet and raster basemaps are loaded from the network; all thematic
+data (blocks, water, services) is embedded into the page, so the dashboard
+does not need a tile API key and works with any of the built-in basemaps,
+including a vector-only “no basemap” mode.</p>
+<p class="rubric">Functions</p>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#my_package.dashboard.build_dashboard" title="my_package.dashboard.build_dashboard"><code class="xref py py-obj docutils literal notranslate"><span class="pre">build_dashboard</span></code></a>(results_path, output_path, *)</p></td>
+<td><p>Build and save a standalone interactive HTML dashboard.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#my_package.dashboard.close_nan" title="my_package.dashboard.close_nan"><code class="xref py py-obj docutils literal notranslate"><span class="pre">close_nan</span></code></a>(value)</p></td>
+<td><p>Return True when a value is missing.</p></td>
+</tr>
+</tbody>
+</table>
+<dl class="py function">
+<dt class="sig sig-object py" id="my_package.dashboard._clean_value">
+<span class="sig-prename descclassname"><span class="pre">my_package.dashboard.</span></span><span class="sig-name descname"><span class="pre">_clean_value</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Any</span></span></span><a class="reference internal" href="../../_modules/my_package/dashboard.html#_clean_value"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#my_package.dashboard._clean_value" title="Permalink to this definition"></a></dt>
+<dd><p>Convert numpy/pandas values into JSON-safe primitives.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="my_package.dashboard._rounded_geometry">
+<span class="sig-prename descclassname"><span class="pre">my_package.dashboard.</span></span><span class="sig-name descname"><span class="pre">_rounded_geometry</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">geometry</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ndigits</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">6</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></span><a class="reference internal" href="../../_modules/my_package/dashboard.html#_rounded_geometry"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#my_package.dashboard._rounded_geometry" title="Permalink to this definition"></a></dt>
+<dd><p>Return a GeoJSON geometry with rounded coordinates.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="my_package.dashboard._feature_collection">
+<span class="sig-prename descclassname"><span class="pre">my_package.dashboard.</span></span><span class="sig-name descname"><span class="pre">_feature_collection</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">gdf</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">GeoDataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">columns</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../_modules/my_package/dashboard.html#_feature_collection"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#my_package.dashboard._feature_collection" title="Permalink to this definition"></a></dt>
+<dd><p>Build a compact GeoJSON FeatureCollection with cleaned properties.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="my_package.dashboard._numeric_breaks">
+<span class="sig-prename descclassname"><span class="pre">my_package.dashboard.</span></span><span class="sig-name descname"><span class="pre">_numeric_breaks</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">series</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Series</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fixed</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">classes</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">5</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../_modules/my_package/dashboard.html#_numeric_breaks"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#my_package.dashboard._numeric_breaks" title="Permalink to this definition"></a></dt>
+<dd><p>Build break points for a quantile colour scale, keeping zero values readable.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="my_package.dashboard.close_nan">
+<span class="sig-prename descclassname"><span class="pre">my_package.dashboard.</span></span><span class="sig-name descname"><span class="pre">close_nan</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="reference internal" href="../../_modules/my_package/dashboard.html#close_nan"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#my_package.dashboard.close_nan" title="Permalink to this definition"></a></dt>
+<dd><p>Return True when a value is missing.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="my_package.dashboard._accessibility_payload">
+<span class="sig-prename descclassname"><span class="pre">my_package.dashboard.</span></span><span class="sig-name descname"><span class="pre">_accessibility_payload</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">results</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">GeoDataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Path</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../_modules/my_package/dashboard.html#_accessibility_payload"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#my_package.dashboard._accessibility_payload" title="Permalink to this definition"></a></dt>
+<dd><p>Embed the pedestrian matrix for destination accessibility mode.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="my_package.dashboard.build_dashboard">
+<span class="sig-prename descclassname"><span class="pre">my_package.dashboard.</span></span><span class="sig-name descname"><span class="pre">build_dashboard</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">results_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Path</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">boundaries_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Path</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lakes_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Path</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">services_dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Path</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">title</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'Высоцкое</span> <span class="pre">городское</span> <span class="pre">поселение'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">subtitle</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'Интерактивный</span> <span class="pre">профиль</span> <span class="pre">городской</span> <span class="pre">среды'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Path</span></span></span><a class="reference internal" href="../../_modules/my_package/dashboard.html#build_dashboard"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#my_package.dashboard.build_dashboard" title="Permalink to this definition"></a></dt>
+<dd><p>Build and save a standalone interactive HTML dashboard.</p>
+</dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="my_package.accessibility.html" class="btn btn-neutral float-left" title="my_package.accessibility" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="my_package.dashboard_template.html" class="btn btn-neutral float-right" title="my_package.dashboard_template" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024-2026.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

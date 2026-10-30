@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>my_package.statistics &mdash; MyPackage 0.0.1 documentation</title>
+      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/graphviz.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/doctools.js"></script>
+        <script src="../../_static/sphinx_highlight.js"></script>
+        <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            MyPackage
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../guide/index.html">Гайд по использованию шаблона</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../examples/index.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api/index.html">API documentation</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">MyPackage</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">my_package.statistics</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for my_package.statistics</h1><div class="highlight"><pre>
+<span></span><span class="sd">"""Statistics for block-level urban indicators and dashboard filters."""</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">math</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Iterable</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+
+
+<span class="n">NUMERIC_OPERATORS</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"eq"</span><span class="p">,</span> <span class="s2">"ne"</span><span class="p">,</span> <span class="s2">"gt"</span><span class="p">,</span> <span class="s2">"gte"</span><span class="p">,</span> <span class="s2">"lt"</span><span class="p">,</span> <span class="s2">"lte"</span><span class="p">,</span> <span class="s2">"between"</span><span class="p">)</span>
+<span class="n">CATEGORICAL_OPERATORS</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"eq"</span><span class="p">,</span> <span class="s2">"ne"</span><span class="p">,</span> <span class="s2">"contains"</span><span class="p">)</span>
+<span class="n">BOOLEAN_OPERATORS</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"eq"</span><span class="p">,)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_number</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">number</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+    <span class="k">except</span> <span class="p">(</span><span class="ne">TypeError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">):</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="k">return</span> <span class="n">number</span> <span class="k">if</span> <span class="n">math</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">number</span><span class="p">)</span> <span class="k">else</span> <span class="kc">None</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_json_number</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">return</span> <span class="n">_number</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_mask_for_filter</span><span class="p">(</span>  <span class="c1"># pylint: disable=too-many-return-statements</span>
+    <span class="n">frame</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">item</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">:</span>
+    <span class="n">field</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">item</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"field"</span><span class="p">,</span> <span class="s2">""</span><span class="p">))</span>
+    <span class="n">operator</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">item</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"op"</span><span class="p">,</span> <span class="s2">"eq"</span><span class="p">))</span>
+    <span class="n">value</span> <span class="o">=</span> <span class="n">item</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"value"</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">field</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">frame</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="kc">False</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="n">frame</span><span class="o">.</span><span class="n">index</span><span class="p">)</span>
+
+    <span class="n">series</span> <span class="o">=</span> <span class="n">frame</span><span class="p">[</span><span class="n">field</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">operator</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"gt"</span><span class="p">,</span> <span class="s2">"gte"</span><span class="p">,</span> <span class="s2">"lt"</span><span class="p">,</span> <span class="s2">"lte"</span><span class="p">,</span> <span class="s2">"between"</span><span class="p">):</span>
+        <span class="n">numeric</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">to_numeric</span><span class="p">(</span><span class="n">series</span><span class="p">,</span> <span class="n">errors</span><span class="o">=</span><span class="s2">"coerce"</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">operator</span> <span class="o">==</span> <span class="s2">"between"</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">))</span> <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">2</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="kc">False</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="n">frame</span><span class="o">.</span><span class="n">index</span><span class="p">)</span>
+            <span class="n">low</span><span class="p">,</span> <span class="n">high</span> <span class="o">=</span> <span class="n">_number</span><span class="p">(</span><span class="n">value</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="n">_number</span><span class="p">(</span><span class="n">value</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+            <span class="k">if</span> <span class="n">low</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">high</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="kc">False</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="n">frame</span><span class="o">.</span><span class="n">index</span><span class="p">)</span>
+            <span class="n">low</span><span class="p">,</span> <span class="n">high</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">low</span><span class="p">,</span> <span class="n">high</span><span class="p">),</span> <span class="nb">max</span><span class="p">(</span><span class="n">low</span><span class="p">,</span> <span class="n">high</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">numeric</span><span class="o">.</span><span class="n">between</span><span class="p">(</span><span class="n">low</span><span class="p">,</span> <span class="n">high</span><span class="p">,</span> <span class="n">inclusive</span><span class="o">=</span><span class="s2">"both"</span><span class="p">)</span>
+        <span class="n">target</span> <span class="o">=</span> <span class="n">_number</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">target</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="kc">False</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="n">frame</span><span class="o">.</span><span class="n">index</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">operator</span> <span class="o">==</span> <span class="s2">"gt"</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">numeric</span> <span class="o">&gt;</span> <span class="n">target</span>
+        <span class="k">if</span> <span class="n">operator</span> <span class="o">==</span> <span class="s2">"gte"</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">numeric</span> <span class="o">&gt;=</span> <span class="n">target</span>
+        <span class="k">if</span> <span class="n">operator</span> <span class="o">==</span> <span class="s2">"lt"</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">numeric</span> <span class="o">&lt;</span> <span class="n">target</span>
+        <span class="k">return</span> <span class="n">numeric</span> <span class="o">&lt;=</span> <span class="n">target</span>
+
+    <span class="k">if</span> <span class="n">operator</span> <span class="o">==</span> <span class="s2">"contains"</span><span class="p">:</span>
+        <span class="n">needle</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">value</span> <span class="ow">or</span> <span class="s2">""</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">series</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="s2">""</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">str</span><span class="p">)</span><span class="o">.</span><span class="n">str</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span><span class="o">.</span><span class="n">str</span><span class="o">.</span><span class="n">contains</span><span class="p">(</span><span class="n">needle</span><span class="p">,</span> <span class="n">regex</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">operator</span> <span class="o">==</span> <span class="s2">"ne"</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">series</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">str</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">str</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">series</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">str</span><span class="p">)</span> <span class="o">==</span> <span class="nb">str</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="apply_filters"><a class="viewcode-back" href="../../api/_autosummary/my_package.statistics.html#my_package.statistics.apply_filters">[docs]</a><span class="k">def</span><span class="w"> </span><span class="nf">apply_filters</span><span class="p">(</span><span class="n">frame</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">filters</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Return rows matching all filters."""</span>
+    <span class="n">filtered</span> <span class="o">=</span> <span class="n">frame</span>
+    <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">filters</span> <span class="ow">or</span> <span class="p">[]:</span>
+        <span class="n">filtered</span> <span class="o">=</span> <span class="n">filtered</span><span class="p">[</span><span class="n">_mask_for_filter</span><span class="p">(</span><span class="n">filtered</span><span class="p">,</span> <span class="n">item</span><span class="p">)]</span>
+    <span class="k">return</span> <span class="n">filtered</span></div>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_numeric_summary</span><span class="p">(</span><span class="n">series</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">spec</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+    <span class="n">numeric</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">to_numeric</span><span class="p">(</span><span class="n">series</span><span class="p">,</span> <span class="n">errors</span><span class="o">=</span><span class="s2">"coerce"</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">([</span><span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">,</span> <span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">],</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>
+    <span class="n">clean</span> <span class="o">=</span> <span class="n">numeric</span><span class="o">.</span><span class="n">dropna</span><span class="p">()</span>
+    <span class="n">size</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">clean</span><span class="o">.</span><span class="n">size</span><span class="p">)</span>
+    <span class="n">result</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">"id"</span><span class="p">:</span> <span class="n">spec</span><span class="p">[</span><span class="s2">"id"</span><span class="p">],</span>
+        <span class="s2">"label"</span><span class="p">:</span> <span class="n">spec</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"label"</span><span class="p">,</span> <span class="n">spec</span><span class="p">[</span><span class="s2">"id"</span><span class="p">]),</span>
+        <span class="s2">"unit"</span><span class="p">:</span> <span class="n">spec</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"unit"</span><span class="p">,</span> <span class="s2">""</span><span class="p">),</span>
+        <span class="s2">"decimals"</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">spec</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"decimals"</span><span class="p">,</span> <span class="mi">0</span><span class="p">)),</span>
+        <span class="s2">"format"</span><span class="p">:</span> <span class="n">spec</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"format"</span><span class="p">,</span> <span class="s2">"number"</span><span class="p">),</span>
+        <span class="s2">"n"</span><span class="p">:</span> <span class="n">size</span><span class="p">,</span>
+        <span class="s2">"missing"</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">numeric</span><span class="o">.</span><span class="n">isna</span><span class="p">()</span><span class="o">.</span><span class="n">sum</span><span class="p">()),</span>
+        <span class="s2">"reliable"</span><span class="p">:</span> <span class="n">size</span> <span class="o">&gt;=</span> <span class="mi">5</span><span class="p">,</span>
+    <span class="p">}</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">size</span><span class="p">:</span>
+        <span class="n">result</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s2">"mean"</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span> <span class="s2">"median"</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span> <span class="s2">"min"</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span> <span class="s2">"max"</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span> <span class="s2">"q1"</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span> <span class="s2">"q3"</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span> <span class="s2">"sum"</span><span class="p">:</span> <span class="kc">None</span><span class="p">})</span>
+        <span class="k">return</span> <span class="n">result</span>
+    <span class="n">result</span><span class="o">.</span><span class="n">update</span><span class="p">(</span>
+        <span class="p">{</span>
+            <span class="s2">"mean"</span><span class="p">:</span> <span class="n">_json_number</span><span class="p">(</span><span class="n">clean</span><span class="o">.</span><span class="n">mean</span><span class="p">()),</span>
+            <span class="s2">"median"</span><span class="p">:</span> <span class="n">_json_number</span><span class="p">(</span><span class="n">clean</span><span class="o">.</span><span class="n">median</span><span class="p">()),</span>
+            <span class="s2">"min"</span><span class="p">:</span> <span class="n">_json_number</span><span class="p">(</span><span class="n">clean</span><span class="o">.</span><span class="n">min</span><span class="p">()),</span>
+            <span class="s2">"max"</span><span class="p">:</span> <span class="n">_json_number</span><span class="p">(</span><span class="n">clean</span><span class="o">.</span><span class="n">max</span><span class="p">()),</span>
+            <span class="s2">"q1"</span><span class="p">:</span> <span class="n">_json_number</span><span class="p">(</span><span class="n">clean</span><span class="o">.</span><span class="n">quantile</span><span class="p">(</span><span class="mf">0.25</span><span class="p">)),</span>
+            <span class="s2">"q3"</span><span class="p">:</span> <span class="n">_json_number</span><span class="p">(</span><span class="n">clean</span><span class="o">.</span><span class="n">quantile</span><span class="p">(</span><span class="mf">0.75</span><span class="p">)),</span>
+            <span class="s2">"sum"</span><span class="p">:</span> <span class="n">_json_number</span><span class="p">(</span><span class="n">clean</span><span class="o">.</span><span class="n">sum</span><span class="p">()),</span>
+        <span class="p">}</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">result</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_categorical_summary</span><span class="p">(</span><span class="n">series</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">spec</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+    <span class="n">raw</span> <span class="o">=</span> <span class="n">series</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">value</span><span class="p">:</span> <span class="kc">None</span> <span class="k">if</span> <span class="n">pd</span><span class="o">.</span><span class="n">isna</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="k">else</span> <span class="nb">str</span><span class="p">(</span><span class="n">value</span><span class="p">))</span>
+    <span class="n">counts</span> <span class="o">=</span> <span class="n">raw</span><span class="o">.</span><span class="n">value_counts</span><span class="p">(</span><span class="n">dropna</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">total</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">raw</span><span class="p">))</span>
+    <span class="n">labels</span> <span class="o">=</span> <span class="n">spec</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"labels"</span><span class="p">,</span> <span class="p">{})</span>
+    <span class="n">categories</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="p">{</span>
+            <span class="s2">"value"</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">value</span><span class="p">),</span>
+            <span class="s2">"label"</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">labels</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">value</span><span class="p">),</span> <span class="n">value</span><span class="p">)),</span>
+            <span class="s2">"count"</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">count</span><span class="p">),</span>
+            <span class="s2">"share"</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">count</span> <span class="o">/</span> <span class="n">total</span><span class="p">)</span> <span class="k">if</span> <span class="n">total</span> <span class="k">else</span> <span class="mf">0.0</span><span class="p">,</span>
+        <span class="p">}</span>
+        <span class="k">for</span> <span class="n">value</span><span class="p">,</span> <span class="n">count</span> <span class="ow">in</span> <span class="n">counts</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+    <span class="p">]</span>
+    <span class="n">missing</span> <span class="o">=</span> <span class="n">total</span> <span class="o">-</span> <span class="nb">int</span><span class="p">(</span><span class="n">counts</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span>
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="s2">"id"</span><span class="p">:</span> <span class="n">spec</span><span class="p">[</span><span class="s2">"id"</span><span class="p">],</span>
+        <span class="s2">"label"</span><span class="p">:</span> <span class="n">spec</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"label"</span><span class="p">,</span> <span class="n">spec</span><span class="p">[</span><span class="s2">"id"</span><span class="p">]),</span>
+        <span class="s2">"n"</span><span class="p">:</span> <span class="n">total</span> <span class="o">-</span> <span class="n">missing</span><span class="p">,</span>
+        <span class="s2">"missing"</span><span class="p">:</span> <span class="n">missing</span><span class="p">,</span>
+        <span class="s2">"reliable"</span><span class="p">:</span> <span class="n">total</span> <span class="o">-</span> <span class="n">missing</span> <span class="o">&gt;=</span> <span class="mi">5</span><span class="p">,</span>
+        <span class="s2">"categories"</span><span class="p">:</span> <span class="n">categories</span><span class="p">,</span>
+    <span class="p">}</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_share</span><span class="p">(</span><span class="n">mask</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">eligible</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="n">denominator</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">eligible</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="kc">False</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span>
+    <span class="k">if</span> <span class="n">denominator</span> <span class="o">&lt;</span> <span class="mi">5</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="nb">int</span><span class="p">((</span><span class="n">mask</span> <span class="o">&amp;</span> <span class="n">eligible</span><span class="p">)</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="kc">False</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span> <span class="o">/</span> <span class="n">denominator</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_numeric_series</span><span class="p">(</span><span class="n">frame</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">field</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">field</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">frame</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="n">frame</span><span class="o">.</span><span class="n">index</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">to_numeric</span><span class="p">(</span><span class="n">frame</span><span class="p">[</span><span class="n">field</span><span class="p">],</span> <span class="n">errors</span><span class="o">=</span><span class="s2">"coerce"</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">([</span><span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">,</span> <span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">],</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_spearman</span><span class="p">(</span><span class="n">frame</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">left</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">right</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">eligible</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="n">pair</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span>
+        <span class="p">{</span>
+            <span class="s2">"left"</span><span class="p">:</span> <span class="n">_numeric_series</span><span class="p">(</span><span class="n">frame</span><span class="p">,</span> <span class="n">left</span><span class="p">),</span>
+            <span class="s2">"right"</span><span class="p">:</span> <span class="n">_numeric_series</span><span class="p">(</span><span class="n">frame</span><span class="p">,</span> <span class="n">right</span><span class="p">),</span>
+        <span class="p">}</span>
+    <span class="p">)</span>
+    <span class="n">pair</span> <span class="o">=</span> <span class="n">pair</span><span class="p">[</span><span class="n">eligible</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="kc">False</span><span class="p">)]</span><span class="o">.</span><span class="n">dropna</span><span class="p">()</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">pair</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">5</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="s2">"left"</span><span class="p">:</span> <span class="n">left</span><span class="p">,</span>
+        <span class="s2">"right"</span><span class="p">:</span> <span class="n">right</span><span class="p">,</span>
+        <span class="s2">"n"</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">pair</span><span class="p">)),</span>
+        <span class="s2">"rho"</span><span class="p">:</span> <span class="n">_json_number</span><span class="p">(</span><span class="n">pair</span><span class="p">[</span><span class="s2">"left"</span><span class="p">]</span><span class="o">.</span><span class="n">rank</span><span class="p">()</span><span class="o">.</span><span class="n">corr</span><span class="p">(</span><span class="n">pair</span><span class="p">[</span><span class="s2">"right"</span><span class="p">]</span><span class="o">.</span><span class="n">rank</span><span class="p">())),</span>
+    <span class="p">}</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_insights</span><span class="p">(</span><span class="n">frame</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>  <span class="c1"># pylint: disable=too-many-locals</span>
+    <span class="n">insights</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">population</span> <span class="o">=</span> <span class="n">_numeric_series</span><span class="p">(</span><span class="n">frame</span><span class="p">,</span> <span class="s2">"population"</span><span class="p">)</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="mf">0.0</span><span class="p">)</span>
+    <span class="n">populated</span> <span class="o">=</span> <span class="n">population</span> <span class="o">&gt;</span> <span class="mi">0</span>
+    <span class="n">built</span> <span class="o">=</span> <span class="n">_numeric_series</span><span class="p">(</span><span class="n">frame</span><span class="p">,</span> <span class="s2">"osr"</span><span class="p">)</span><span class="o">.</span><span class="n">notna</span><span class="p">()</span>
+
+    <span class="n">green</span> <span class="o">=</span> <span class="n">_numeric_series</span><span class="p">(</span><span class="n">frame</span><span class="p">,</span> <span class="s2">"green_share"</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">green</span><span class="o">.</span><span class="n">notna</span><span class="p">()</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span> <span class="o">&gt;=</span> <span class="mi">5</span><span class="p">:</span>
+        <span class="n">share_green</span> <span class="o">=</span> <span class="nb">float</span><span class="p">((</span><span class="n">green</span> <span class="o">&gt;=</span> <span class="mf">0.5</span><span class="p">)</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="kc">False</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">())</span>
+        <span class="n">insights</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"Доля кварталов с green_share ≥ 0,5: </span><span class="si">{</span><span class="n">share_green</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mi">100</span><span class="si">:</span><span class="s2">.0f</span><span class="si">}</span><span class="s2">% "</span> <span class="sa">f</span><span class="s2">"(n=</span><span class="si">{</span><span class="nb">int</span><span class="p">(</span><span class="n">green</span><span class="o">.</span><span class="n">notna</span><span class="p">()</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span><span class="si">}</span><span class="s2">)."</span>
+        <span class="p">)</span>
+
+    <span class="n">access</span> <span class="o">=</span> <span class="n">_numeric_series</span><span class="p">(</span><span class="n">frame</span><span class="p">,</span> <span class="s2">"green_access_m"</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">access</span><span class="o">.</span><span class="n">notna</span><span class="p">()</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span> <span class="o">&gt;=</span> <span class="mi">5</span><span class="p">:</span>
+        <span class="n">within</span> <span class="o">=</span> <span class="nb">float</span><span class="p">((</span><span class="n">access</span> <span class="o">&lt;=</span> <span class="mi">500</span><span class="p">)</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="kc">False</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">())</span>
+        <span class="n">insights</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"Медианный доступ к публичной зелени по дорожной сети: "</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">access</span><span class="o">.</span><span class="n">median</span><span class="p">()</span><span class="si">:</span><span class="s2">.0f</span><span class="si">}</span><span class="s2"> м; в пределах 500 м — </span><span class="si">{</span><span class="n">within</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mi">100</span><span class="si">:</span><span class="s2">.0f</span><span class="si">}</span><span class="s2">% кварталов."</span>
+        <span class="p">)</span>
+
+    <span class="n">osr</span> <span class="o">=</span> <span class="n">_numeric_series</span><span class="p">(</span><span class="n">frame</span><span class="p">,</span> <span class="s2">"osr"</span><span class="p">)</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">built</span><span class="p">]</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">osr</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">5</span><span class="p">:</span>
+        <span class="n">insights</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"Медианная открытость застройки (OSR): </span><span class="si">{</span><span class="n">osr</span><span class="o">.</span><span class="n">median</span><span class="p">()</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> "</span> <span class="sa">f</span><span class="s2">"(n=</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">osr</span><span class="p">)</span><span class="si">}</span><span class="s2"> кварталов с застройкой)."</span>
+        <span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">service_id</span><span class="p">,</span> <span class="n">label</span> <span class="ow">in</span> <span class="p">((</span><span class="s2">"grocery"</span><span class="p">,</span> <span class="s2">"магазинами"</span><span class="p">),</span> <span class="p">(</span><span class="s2">"parks"</span><span class="p">,</span> <span class="s2">"парками"</span><span class="p">)):</span>
+        <span class="n">provision</span> <span class="o">=</span> <span class="n">_numeric_series</span><span class="p">(</span><span class="n">frame</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"provision_strong_</span><span class="si">{</span><span class="n">service_id</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="n">eligible</span> <span class="o">=</span> <span class="n">populated</span> <span class="o">&amp;</span> <span class="n">provision</span><span class="o">.</span><span class="n">notna</span><span class="p">()</span>
+        <span class="k">if</span> <span class="nb">int</span><span class="p">(</span><span class="n">eligible</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span> <span class="o">&gt;=</span> <span class="mi">5</span><span class="p">:</span>
+            <span class="n">covered</span> <span class="o">=</span> <span class="nb">float</span><span class="p">((</span><span class="n">provision</span> <span class="o">&gt;=</span> <span class="mf">0.999999</span><span class="p">)</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">eligible</span><span class="p">]</span><span class="o">.</span><span class="n">mean</span><span class="p">())</span>
+            <span class="n">insights</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"Полная обеспеченность </span><span class="si">{</span><span class="n">label</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">covered</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mi">100</span><span class="si">:</span><span class="s2">.0f</span><span class="si">}</span><span class="s2">% "</span>
+                <span class="sa">f</span><span class="s2">"(n=</span><span class="si">{</span><span class="nb">int</span><span class="p">(</span><span class="n">eligible</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span><span class="si">}</span><span class="s2"> кварталов с населением)."</span>
+            <span class="p">)</span>
+    <span class="k">for</span> <span class="n">universe</span><span class="p">,</span> <span class="n">mask</span> <span class="ow">in</span> <span class="p">((</span><span class="s2">"с застройкой"</span><span class="p">,</span> <span class="n">built</span><span class="p">),</span> <span class="p">(</span><span class="s2">"с населением"</span><span class="p">,</span> <span class="n">populated</span><span class="p">)):</span>
+        <span class="n">correlation</span> <span class="o">=</span> <span class="n">_spearman</span><span class="p">(</span><span class="n">frame</span><span class="p">,</span> <span class="s2">"osr"</span><span class="p">,</span> <span class="s2">"green_share"</span><span class="p">,</span> <span class="n">mask</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">correlation</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">insights</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"Spearman OSR ↔ green_share, </span><span class="si">{</span><span class="n">universe</span><span class="si">}</span><span class="s2">: ρ=</span><span class="si">{</span><span class="n">correlation</span><span class="p">[</span><span class="s1">'rho'</span><span class="p">]</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2"> "</span> <span class="sa">f</span><span class="s2">"(n=</span><span class="si">{</span><span class="n">correlation</span><span class="p">[</span><span class="s1">'n'</span><span class="p">]</span><span class="si">}</span><span class="s2">)."</span>
+            <span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">insights</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_field_metadata</span><span class="p">(</span><span class="n">frame</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">specs</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]:</span>
+    <span class="n">fields</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">spec</span> <span class="ow">in</span> <span class="n">specs</span><span class="p">:</span>
+        <span class="n">field</span> <span class="o">=</span> <span class="n">spec</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"id"</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">field</span> <span class="ow">or</span> <span class="n">field</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">frame</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="n">item</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">"id"</span><span class="p">:</span> <span class="n">field</span><span class="p">,</span>
+            <span class="s2">"label"</span><span class="p">:</span> <span class="n">spec</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"label"</span><span class="p">,</span> <span class="n">field</span><span class="p">),</span>
+            <span class="s2">"kind"</span><span class="p">:</span> <span class="n">spec</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"kind"</span><span class="p">,</span> <span class="s2">"numeric"</span><span class="p">),</span>
+            <span class="s2">"unit"</span><span class="p">:</span> <span class="n">spec</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"unit"</span><span class="p">,</span> <span class="s2">""</span><span class="p">),</span>
+            <span class="s2">"decimals"</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">spec</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"decimals"</span><span class="p">,</span> <span class="mi">0</span><span class="p">)),</span>
+            <span class="s2">"format"</span><span class="p">:</span> <span class="n">spec</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"format"</span><span class="p">,</span> <span class="s2">"number"</span><span class="p">),</span>
+        <span class="p">}</span>
+        <span class="k">if</span> <span class="n">item</span><span class="p">[</span><span class="s2">"kind"</span><span class="p">]</span> <span class="o">==</span> <span class="s2">"categorical"</span><span class="p">:</span>
+            <span class="n">item</span><span class="p">[</span><span class="s2">"labels"</span><span class="p">]</span> <span class="o">=</span> <span class="n">spec</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"labels"</span><span class="p">,</span> <span class="p">{})</span>
+            <span class="n">item</span><span class="p">[</span><span class="s2">"categories"</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="nb">str</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="k">for</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">frame</span><span class="p">[</span><span class="n">field</span><span class="p">]</span><span class="o">.</span><span class="n">dropna</span><span class="p">()</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">str</span><span class="p">)</span><span class="o">.</span><span class="n">value_counts</span><span class="p">()</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+            <span class="p">]</span>
+        <span class="n">fields</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">field</span><span class="p">,</span> <span class="n">label</span> <span class="ow">in</span> <span class="p">((</span><span class="s2">"has_building"</span><span class="p">,</span> <span class="s2">"Только с застройкой"</span><span class="p">),</span> <span class="p">(</span><span class="s2">"has_population"</span><span class="p">,</span> <span class="s2">"Только с населением"</span><span class="p">)):</span>
+        <span class="k">if</span> <span class="n">field</span> <span class="ow">in</span> <span class="n">frame</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
+            <span class="n">fields</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="p">{</span>
+                    <span class="s2">"id"</span><span class="p">:</span> <span class="n">field</span><span class="p">,</span>
+                    <span class="s2">"label"</span><span class="p">:</span> <span class="n">label</span><span class="p">,</span>
+                    <span class="s2">"kind"</span><span class="p">:</span> <span class="s2">"boolean"</span><span class="p">,</span>
+                    <span class="s2">"unit"</span><span class="p">:</span> <span class="s2">""</span><span class="p">,</span>
+                    <span class="s2">"decimals"</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+                    <span class="s2">"format"</span><span class="p">:</span> <span class="s2">"boolean"</span><span class="p">,</span>
+                <span class="p">}</span>
+            <span class="p">)</span>
+    <span class="k">return</span> <span class="n">fields</span>
+
+
+<div class="viewcode-block" id="compute_statistics"><a class="viewcode-back" href="../../api/_autosummary/my_package.statistics.html#my_package.statistics.compute_statistics">[docs]</a><span class="k">def</span><span class="w"> </span><span class="nf">compute_statistics</span><span class="p">(</span>
+    <span class="n">frame</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
+    <span class="n">specs</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]],</span>
+    <span class="n">filters</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Compute a JSON-ready statistics block for the selected filters."""</span>
+    <span class="n">specs</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">specs</span><span class="p">)</span>
+    <span class="n">filtered</span> <span class="o">=</span> <span class="n">apply_filters</span><span class="p">(</span><span class="n">frame</span><span class="p">,</span> <span class="n">filters</span><span class="p">)</span>
+    <span class="n">population</span> <span class="o">=</span> <span class="n">_numeric_series</span><span class="p">(</span><span class="n">filtered</span><span class="p">,</span> <span class="s2">"population"</span><span class="p">)</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="mf">0.0</span><span class="p">)</span>
+    <span class="n">built</span> <span class="o">=</span> <span class="n">_numeric_series</span><span class="p">(</span><span class="n">filtered</span><span class="p">,</span> <span class="s2">"osr"</span><span class="p">)</span><span class="o">.</span><span class="n">notna</span><span class="p">()</span>
+    <span class="n">populated</span> <span class="o">=</span> <span class="n">population</span> <span class="o">&gt;</span> <span class="mi">0</span>
+
+    <span class="n">numeric</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">_numeric_summary</span><span class="p">(</span><span class="n">filtered</span><span class="p">[</span><span class="n">spec</span><span class="p">[</span><span class="s2">"id"</span><span class="p">]],</span> <span class="n">spec</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">spec</span> <span class="ow">in</span> <span class="n">specs</span>
+        <span class="k">if</span> <span class="n">spec</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"kind"</span><span class="p">,</span> <span class="s2">"numeric"</span><span class="p">)</span> <span class="o">==</span> <span class="s2">"numeric"</span> <span class="ow">and</span> <span class="n">spec</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"id"</span><span class="p">)</span> <span class="ow">in</span> <span class="n">filtered</span><span class="o">.</span><span class="n">columns</span>
+    <span class="p">]</span>
+    <span class="n">categorical</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">_categorical_summary</span><span class="p">(</span><span class="n">filtered</span><span class="p">[</span><span class="n">spec</span><span class="p">[</span><span class="s2">"id"</span><span class="p">]],</span> <span class="n">spec</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">spec</span> <span class="ow">in</span> <span class="n">specs</span>
+        <span class="k">if</span> <span class="n">spec</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"kind"</span><span class="p">)</span> <span class="o">==</span> <span class="s2">"categorical"</span> <span class="ow">and</span> <span class="n">spec</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"id"</span><span class="p">)</span> <span class="ow">in</span> <span class="n">filtered</span><span class="o">.</span><span class="n">columns</span>
+    <span class="p">]</span>
+
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="s2">"meta"</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s2">"blocks"</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">filtered</span><span class="p">)),</span>
+            <span class="s2">"built"</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">built</span><span class="o">.</span><span class="n">sum</span><span class="p">()),</span>
+            <span class="s2">"populated"</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">populated</span><span class="o">.</span><span class="n">sum</span><span class="p">()),</span>
+            <span class="s2">"population"</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">population</span><span class="o">.</span><span class="n">sum</span><span class="p">()),</span>
+            <span class="s2">"filters"</span><span class="p">:</span> <span class="nb">list</span><span class="p">(</span><span class="n">filters</span> <span class="ow">or</span> <span class="p">[]),</span>
+        <span class="p">},</span>
+        <span class="s2">"numeric"</span><span class="p">:</span> <span class="n">numeric</span><span class="p">,</span>
+        <span class="s2">"categorical"</span><span class="p">:</span> <span class="n">categorical</span><span class="p">,</span>
+        <span class="s2">"insights"</span><span class="p">:</span> <span class="n">_insights</span><span class="p">(</span><span class="n">filtered</span><span class="p">),</span>
+    <span class="p">}</span></div>
+
+
+<div class="viewcode-block" id="build_statistics_payload"><a class="viewcode-back" href="../../api/_autosummary/my_package.statistics.html#my_package.statistics.build_statistics_payload">[docs]</a><span class="k">def</span><span class="w"> </span><span class="nf">build_statistics_payload</span><span class="p">(</span>
+    <span class="n">frame</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
+    <span class="n">specs</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]],</span>
+    <span class="n">filters</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Build baseline statistics and field metadata for the dashboard."""</span>
+    <span class="n">specs</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">specs</span><span class="p">)</span>
+    <span class="n">baseline</span> <span class="o">=</span> <span class="n">compute_statistics</span><span class="p">(</span><span class="n">frame</span><span class="p">,</span> <span class="n">specs</span><span class="p">,</span> <span class="n">filters</span><span class="p">)</span>
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="s2">"fields"</span><span class="p">:</span> <span class="n">_field_metadata</span><span class="p">(</span><span class="n">frame</span><span class="p">,</span> <span class="n">specs</span><span class="p">),</span>
+        <span class="s2">"baseline"</span><span class="p">:</span> <span class="n">baseline</span><span class="p">,</span>
+        <span class="s2">"methods"</span><span class="p">:</span> <span class="p">[</span>
+            <span class="s2">"Показатели рассчитаны по кварталам, а не по отдельным зданиям."</span><span class="p">,</span>
+            <span class="s2">"Пропуски исключаются из расчёта средних и медиан; n указан для каждой метрики."</span><span class="p">,</span>
+            <span class="s2">"Группы с n &lt; 5 помечаются как недостаточные для устойчивых выводов."</span><span class="p">,</span>
+            <span class="s2">"Доступ к зелени рассчитан по существующему дорожному графу "</span>
+            <span class="s2">"до park и публичных озеленённых территорий landuse."</span><span class="p">,</span>
+            <span class="s2">"OSR — открытость застройки, а не доля озеленения."</span><span class="p">,</span>
+        <span class="p">],</span>
+        <span class="s2">"disclaimer"</span><span class="p">:</span> <span class="p">(</span>
+            <span class="s2">"Материал носит аналитический характер. Показатели зависят от полноты OpenStreetMap, "</span>
+            <span class="s2">"модели населения и импутации ёмкости сервисов; их нельзя использовать как официальную статистику."</span>
+        <span class="p">),</span>
+    <span class="p">}</span></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024-2026.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
